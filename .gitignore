@@ -1,0 +1,25 @@
+# Godot 4 : ce que le moteur regenere tout seul et qui n'a rien a faire
+# dans un depot. Le dossier .godot pese vite plusieurs centaines de
+# megaoctets une fois les images importees.
+.godot/
+/android/
+
+# Exports : les APK se refabriquent, ils ne se versionnent pas. Et un APK
+# signe contient de quoi publier sous ton nom.
+/export/
+*.apk
+*.aab
+
+# Cles de signature Android. Celles-ci ne doivent JAMAIS partir : qui les
+# a peut publier une mise a jour de ton jeu a ta place.
+*.keystore
+*.jks
+export_presets.cfg
+
+# Captures d'ecran de developpement : refabriquees a chaque lancement de
+# outils/apercu.tscn, donc du bruit dans l'historique.
+/outils/apercu.png
+
+# Systeme
+.DS_Store
+Thumbs.db
