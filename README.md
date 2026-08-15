@@ -1,9 +1,10 @@
 # Bamako Moto
 
 Un jeu d'arcade mobile : tu descends une avenue en moto, tu esquives les
-sotramas, les taxis et les nids-de-poule. Plus tu tiens, plus ça va vite.
+sotramas, les taxis et les tas de sable. Plus tu tiens, plus ça va vite.
 
-Fait avec [Godot 4.7](https://godotengine.org), en GDScript.
+3D basse définition, faite avec [Godot 4.7](https://godotengine.org) en
+GDScript.
 
 ## Lancer le jeu
 
@@ -11,67 +12,85 @@ Ouvre le dossier depuis le gestionnaire de projets de Godot, puis `F5`.
 
 | | |
 |---|---|
-| Se déplacer | flèches gauche / droite, ou le doigt sur l'écran |
+| Changer de voie | flèches gauche / droite, ou le doigt sur l'écran |
 | Rejouer | espace |
 
 ## Comment c'est fait
 
-Trois scripts, un rôle chacun :
+**Aucun fichier d'image, aucun modèle 3D.** Toute la géométrie est
+fabriquée au démarrage, en boîtes, par `scripts/fabrique.gd`. Pas de
+logiciel de modélisation à apprendre, pas d'assets à acheter, et
+l'application reste minuscule.
 
-- **`scripts/jeu.gd`** — la partie. Il fait défiler la route, décide quand
-  un obstacle apparaît et sur quelle voie, tient le score et la vitesse.
-  C'est le seul endroit où se règle la difficulté.
-- **`scripts/moto.gd`** — la moto. Elle ne se déplace que latéralement :
-  c'est la route qui défile sous elle, pas elle qui avance.
-- **`scripts/obstacle.gd`** — un véhicule. Il descend, il se supprime en
-  sortant de l'écran, il ne sait rien du reste.
+Quatre scripts, un rôle chacun :
 
-La route ne bouge pas : c'est sa fenêtre de lecture qui se décale, ce qui
-donne un défilement infini avec un seul nœud et sans raccord visible.
+- **`scripts/jeu.gd`** — la partie. Elle fait remonter l'avenue, décide
+  quand un véhicule apparaît et sur quelle voie, anime la caméra, tient le
+  score et le record. C'est le seul endroit où se règle la difficulté.
+- **`scripts/troncon.gd`** — vingt mètres d'avenue : bitume, bas-côtés,
+  bandes, décor. Douze exemplaires tournent en boucle.
+- **`scripts/moto.gd`** — la moto. Elle n'avance pas : elle se décale, et
+  c'est la route qui remonte vers elle.
+- **`scripts/obstacle.gd`** — un véhicule. Il approche, il disparaît une
+  fois passé, il ne sait rien du reste.
 
 ## Régler la difficulté
 
-Tout est dans l'inspecteur du nœud `Jeu`, ou en haut de `scripts/jeu.gd` :
+Dans l'inspecteur du nœud `Jeu`, ou en haut de `scripts/jeu.gd` :
 
 | Réglage | Effet |
 |---|---|
-| `vitesse_depart` | à quelle allure commence la partie |
+| `vitesse_depart` | allure de départ, en m/s (22 ≈ 80 km/h) |
 | `acceleration` | ce que la vitesse gagne par seconde de survie |
 | `vitesse_maximale` | le plafond |
-| `intervalle_depart` | secondes entre deux véhicules, au début |
-| `intervalle_minimal` | le plus serré possible, en fin de partie |
+| `espacement_depart` | mètres entre deux vagues, au début |
+| `espacement_minimal` | le plus serré, en fin de partie |
 
-L'intervalle se resserre tout seul à mesure que la vitesse monte, sinon la
-route se viderait au moment où elle devrait être la plus dense.
+L'espacement est exprimé **en distance et non en secondes** : la densité
+de circulation reste donc la même quand on accélère, au lieu de devenir
+infernale.
 
-## Les images
-
-Celles de `art/` sont provisoires, dessinées à la main en aplats. Elles
-sont là pour que le jeu soit jouable, pas pour rester. Elles peuvent être
-remplacées une par une : tant que les dimensions ne changent pas, rien
-d'autre n'est à toucher.
-
-## Choix techniques
+## Décisions qui ont une raison
 
 **Rendu en « GL Compatibility »**, pas en « Forward+ ». C'est ce qui
-permet au jeu de tourner sur les cartes graphiques intégrées et sur les
-téléphones Android d'entrée de gamme, qui sont l'essentiel du parc en
-Afrique de l'Ouest.
+décide si le jeu s'ouvre ou reste noir sur un téléphone d'entrée de gamme,
+qui est l'essentiel du parc en Afrique de l'Ouest.
 
-**Portrait 720 × 1280**, étiré en gardant la largeur : sur un téléphone
-plus allongé, on voit simplement plus loin devant soi.
+**Le bitume et les bandes ne projettent pas d'ombre.** Le calcul des
+ombres est une seconde passe de rendu ; la couper sur ce qui est posé à
+plat divise le coût sans qu'on voie la différence.
 
-**Poids visé sous 20 Mo.** Les forfaits data se comptent en mégaoctets ;
-un jeu lourd perd ses installations avant la fin du téléchargement.
+**Les huit bandes d'un tronçon sont un seul objet** (`MultiMesh`). Une par
+objet coûtait une centaine d'appels de rendu pour l'avenue entière.
+
+**Rien n'est créé pendant la partie**, sauf les véhicules : les douze
+tronçons tournent en boucle, ce qui évite les à-coups.
+
+Mesuré sur un portable de 2018 à carte graphique intégrée : **60 images
+par seconde, 5 248 triangles, 259 appels de rendu.**
+
+## Vérifier que ça marche
+
+```
+Godot_v4.7.1-stable_win64_console.exe --path . res://outils/test_collision.tscn
+```
+
+La moto se jette volontairement sur les véhicules et le test échoue si la
+partie ne s'arrête pas. Une capture d'écran ne prouve pas qu'une collision
+fonctionne ; ce test, oui. À rejouer après toute modification des gabarits
+ou des couches de collision.
+
+`res://outils/apercu.tscn` enregistre une image et relève la vitesse
+d'affichage.
 
 ## À faire
 
-- [ ] Écran titre et meilleur score conservé entre deux parties
-- [ ] Pièces à ramasser, et améliorations de la moto entre les parties
+- [ ] Écran titre
+- [ ] Pièces à ramasser, améliorations de la moto entre les parties
 - [ ] Sons
 - [ ] Export Android
 - [ ] Multijoueur entre amis, partagé par WhatsApp
 
 ## Licence
 
-Code et images : Sega SISSOKO.
+Sega SISSOKO.

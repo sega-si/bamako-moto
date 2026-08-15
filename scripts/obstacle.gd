@@ -1,44 +1,49 @@
-extends Area2D
+extends Area3D
 
-## Un vehicule ou un trou qui descend vers le joueur.
+## Un vehicule ou un obstacle qui remonte vers le joueur.
 ##
-## L'obstacle ne sait rien du jeu : il descend, et il se supprime quand il
-## sort de l'ecran. C'est la scene de jeu qui decide quand en faire naitre
-## un, et lequel.
+## Il ne sait rien du jeu : il avance, il disparait une fois passe. C'est
+## la partie qui decide quand en faire naitre un, et lequel.
 
-## Vitesse de descente, en pixels par seconde. La scene de jeu l'augmente
-## au fil de la partie.
-var vitesse: float = 600.0
+enum Genre { SOTRAMA, TAXI, SABLE }
 
-@onready var _image: Sprite2D = $Image
-@onready var _forme: CollisionShape2D = $Forme
+## Vitesse de rapprochement, en metres par seconde. La partie la met a
+## jour a chaque apparition.
+var vitesse: float = 20.0
 
-
-## Les obstacles possibles. « occupe » dit quelle part de la largeur de la
-## route le vehicule prend, ce qui sert a ne pas boucher les trois voies
-## d'un coup et rendre la partie injouable.
-const MODELES := [
-	{"image": "res://art/sotrama.png", "occupe": 0.30},
-	{"image": "res://art/taxi.png", "occupe": 0.26},
-	{"image": "res://art/nid_de_poule.png", "occupe": 0.22},
-]
+var genre: int = Genre.SOTRAMA
 
 
-func configurer(modele: Dictionary) -> void:
-	var texture: Texture2D = load(modele["image"])
-	_image.texture = texture
+## Largeur au sol de chaque genre, pour la collision. Plus etroite que
+## l'objet vu a l'ecran, toujours en faveur du joueur.
+const GABARITS := {
+	Genre.SOTRAMA: Vector3(1.6, 2.0, 4.0),
+	Genre.TAXI: Vector3(1.5, 1.4, 3.5),
+	Genre.SABLE: Vector3(1.9, 0.7, 1.9),
+}
 
-	# La forme de collision est un peu plus petite que l'image. Un joueur
-	# qui frole un sotrama et voit « touche » trouve le jeu injuste ; on
-	# lui laisse quelques pixels de pardon.
-	var forme := RectangleShape2D.new()
-	forme.size = texture.get_size() * 0.82
-	_forme.shape = forme
+
+func construire(quel: int) -> void:
+	genre = quel
+	match genre:
+		Genre.SOTRAMA:
+			add_child(Fabrique.sotrama())
+		Genre.TAXI:
+			add_child(Fabrique.taxi())
+		_:
+			add_child(Fabrique.tas_de_sable())
+
+	var forme := CollisionShape3D.new()
+	var boite := BoxShape3D.new()
+	boite.size = GABARITS[genre]
+	forme.shape = boite
+	forme.position = Vector3(0.0, boite.size.y * 0.5, 0.0)
+	add_child(forme)
 
 
 func _process(delta: float) -> void:
-	position.y += vitesse * delta
-	# Une fois bien sorti par le bas, l'obstacle n'a plus aucune raison
-	# d'exister : le garder couterait de la memoire pour rien.
-	if position.y > get_viewport_rect().size.y + 300.0:
+	position.z += vitesse * delta
+	# Une fois derriere la camera, l'obstacle n'a plus aucune raison
+	# d'exister.
+	if position.z > 16.0:
 		queue_free()
