@@ -16,14 +16,18 @@ var _variante := 0
 func construire(variante: int) -> void:
 	_variante = variante
 
+	# Bitume franchement sombre : c'est le contraste avec la terre rouge et
+	# les bandes blanches qui fait ressortir la couleur du reste.
 	var bitume := Fabrique.boite(Vector3(LARGEUR_VOIE * 3.0, 0.2, LONGUEUR),
-			Color(0.22, 0.22, 0.24), false)
+			Color(0.17, 0.17, 0.19), false)
 	bitume.position = Vector3(0.0, -0.1, 0.0)
 	add_child(bitume)
 
 	for cote in [-1.0, 1.0]:
+		# Laterite : au Mali le sol est rouge-orange, pas beige. C'est la
+		# couleur la plus reconnaissable du pays, et elle etait absente.
 		var terre := Fabrique.boite(Vector3(7.0, 0.16, LONGUEUR),
-				Color(0.62, 0.48, 0.33), false)
+				Color(0.76, 0.38, 0.20), false)
 		terre.position = Vector3(cote * (LARGEUR_VOIE * 1.5 + 3.5), -0.12, 0.0)
 		add_child(terre)
 
@@ -115,6 +119,6 @@ func _poser_element(rang: int, cote: float, z: float) -> void:
 			# Un mur de cloture, bas : il laisse voir derriere et ouvre
 			# la perspective au lieu de la boucher.
 			var mur := Fabrique.boite(Vector3(0.3, 2.0, 6.5),
-					Color(0.74, 0.66, 0.54))
+					Color(0.86, 0.62, 0.34))
 			mur.position = Vector3(cote * 7.6, 1.0, z)
 			add_child(mur)

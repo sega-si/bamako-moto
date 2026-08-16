@@ -152,8 +152,8 @@ static func arbre(graine: int) -> Node3D:
 	var hauteur := 2.4 + float(graine % 3) * 0.7
 	_poser(n, Vector3(0.4, hauteur, 0.4), Color(0.40, 0.30, 0.20),
 			Vector3(0.0, hauteur * 0.5, 0.0))
-	var verts := [Color(0.24, 0.45, 0.20), Color(0.30, 0.52, 0.24),
-			Color(0.20, 0.40, 0.18)]
+	var verts := [Color(0.22, 0.58, 0.24), Color(0.32, 0.68, 0.28),
+			Color(0.16, 0.50, 0.22), Color(0.40, 0.72, 0.30)]
 	var teinte: Color = verts[graine % verts.size()]
 	_poser(n, Vector3(3.0, 1.4, 3.0), teinte,
 			Vector3(0.0, hauteur + 0.5, 0.0))
@@ -173,8 +173,9 @@ static func etal(graine: int) -> Node3D:
 				Vector3(cote * 1.0, 0.45, 0.0))
 	_poser(n, Vector3(0.1, 1.3, 0.1), Color(0.35, 0.35, 0.38),
 			Vector3(0.0, 1.6, 0.0))
-	var couleurs := [Color(0.85, 0.25, 0.22), Color(0.20, 0.45, 0.75),
-			Color(0.95, 0.70, 0.15), Color(0.30, 0.60, 0.35)]
+	var couleurs := [Color(0.95, 0.20, 0.18), Color(0.10, 0.42, 0.85),
+			Color(1.00, 0.72, 0.08), Color(0.14, 0.70, 0.40),
+			Color(0.92, 0.30, 0.66), Color(0.98, 0.50, 0.10)]
 	_poser(n, Vector3(3.0, 0.16, 2.2), couleurs[graine % couleurs.size()],
 			Vector3(0.0, 2.3, 0.0))
 	# La marchandise, en petits tas de couleur.
@@ -189,15 +190,21 @@ static func etal(graine: int) -> Node3D:
 ## ce qu'aucun ne ressemble tout a fait au precedent.
 static func immeuble(graine: int) -> Node3D:
 	var n := Node3D.new()
-	var murs := [Color(0.85, 0.72, 0.52), Color(0.78, 0.62, 0.46),
-			Color(0.88, 0.80, 0.62), Color(0.72, 0.58, 0.44),
-			Color(0.80, 0.70, 0.58), Color(0.68, 0.62, 0.52)]
+	# Les devantures de Bamako sont peintes, et vivement : ocre, terre
+	# cuite, turquoise, bleu ciel. Le beige generique n'existe que dans les
+	# jeux faits par des gens qui n'y sont jamais alles.
+	var murs := [Color(0.90, 0.52, 0.18), Color(0.82, 0.28, 0.22),
+			Color(0.16, 0.60, 0.58), Color(0.95, 0.76, 0.20),
+			Color(0.28, 0.52, 0.78), Color(0.88, 0.44, 0.52),
+			Color(0.42, 0.68, 0.34), Color(0.72, 0.36, 0.68)]
 	var hauteur := 3.0 + float(graine % 5) * 1.2
 	var largeur := 4.0 + float(graine % 3) * 1.2
 
 	_poser(n, Vector3(largeur, hauteur, 6.0), murs[graine % murs.size()],
 			Vector3(0.0, hauteur * 0.5, 0.0))
-	_poser(n, Vector3(largeur + 0.4, 0.3, 6.4), Color(0.60, 0.54, 0.46),
+	# Toit de tole, gris-bleu : il tranche sur la facade et fait ressortir
+	# la couleur au lieu de la noyer.
+	_poser(n, Vector3(largeur + 0.4, 0.3, 6.4), Color(0.42, 0.46, 0.50),
 			Vector3(0.0, hauteur + 0.15, 0.0))
 
 	# Un etage en retrait, une fois sur trois : c'est ce qui casse
@@ -209,8 +216,9 @@ static func immeuble(graine: int) -> Node3D:
 				Vector3(0.0, hauteur + h2 * 0.5 + 0.3, -0.6))
 
 	# Auvent et enseigne cote rue.
-	var enseignes := [Color(0.88, 0.22, 0.20), Color(0.20, 0.50, 0.80),
-			Color(0.95, 0.72, 0.12), Color(0.25, 0.62, 0.38)]
+	var enseignes := [Color(1.00, 0.24, 0.20), Color(0.10, 0.45, 0.95),
+			Color(1.00, 0.78, 0.05), Color(0.10, 0.72, 0.40),
+			Color(0.95, 0.35, 0.70)]
 	_poser(n, Vector3(0.2, 0.9, 4.0), enseignes[graine % enseignes.size()],
 			Vector3(-largeur * 0.5 - 0.1, 2.4, 0.0))
 	if graine % 2 == 0:

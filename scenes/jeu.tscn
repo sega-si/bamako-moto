@@ -4,10 +4,10 @@
 [ext_resource type="Script" path="res://scripts/moto.gd" id="2"]
 
 [sub_resource type="ProceduralSkyMaterial" id="1"]
-sky_top_color = Color(0.30, 0.55, 0.86, 1)
-sky_horizon_color = Color(0.86, 0.80, 0.66, 1)
-ground_bottom_color = Color(0.55, 0.45, 0.33, 1)
-ground_horizon_color = Color(0.80, 0.72, 0.58, 1)
+sky_top_color = Color(0.11, 0.42, 0.88, 1)
+sky_horizon_color = Color(0.62, 0.80, 0.94, 1)
+ground_bottom_color = Color(0.72, 0.36, 0.19, 1)
+ground_horizon_color = Color(0.86, 0.55, 0.30, 1)
 
 [sub_resource type="Sky" id="2"]
 sky_material = SubResource("1")
@@ -16,10 +16,14 @@ sky_material = SubResource("1")
 background_mode = 2
 sky = SubResource("2")
 ambient_light_source = 3
-ambient_light_energy = 0.9
+ambient_light_energy = 1.0
 fog_enabled = true
-fog_light_color = Color(0.84, 0.78, 0.64, 1)
-fog_density = 0.011
+; La brume est divisee par deux. A 0,011 elle avalait toute la couleur
+; passe trente metres et l'avenue virait au beige uniforme. Elle sert a
+; faire disparaitre le bout de la route, pas a repeindre le decor.
+fog_light_color = Color(0.72, 0.84, 0.94, 1)
+fog_density = 0.0055
+fog_sky_affect = 0.25
 
 [node name="Jeu" type="Node3D"]
 script = ExtResource("1")
