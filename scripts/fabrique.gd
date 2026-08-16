@@ -40,6 +40,46 @@ static func boite(taille: Vector3, couleur: Color,
 	return noeud
 
 
+static func cylindre(rayon: float, epaisseur: float, couleur: Color,
+		faces := 12, projette_une_ombre := true) -> MeshInstance3D:
+	var maillage := CylinderMesh.new()
+	maillage.top_radius = rayon
+	maillage.bottom_radius = rayon
+	maillage.height = epaisseur
+	maillage.radial_segments = faces
+	maillage.rings = 0
+	var noeud := MeshInstance3D.new()
+	noeud.mesh = maillage
+	noeud.material_override = matiere(couleur)
+	if not projette_une_ombre:
+		noeud.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return noeud
+
+
+## Une roue : pneu, jante et moyeu. L'axe d'un CylinderMesh est vertical,
+## il faut le coucher sur X pour qu'il roule dans le bon sens.
+static func roue(parent: Node3D, rayon: float, position: Vector3) -> void:
+	var pneu := cylindre(rayon, 0.16, Color(0.07, 0.07, 0.08), 14)
+	pneu.rotation_degrees = Vector3(0.0, 0.0, 90.0)
+	pneu.position = position
+	parent.add_child(pneu)
+
+	var jante := cylindre(rayon * 0.52, 0.18, Color(0.72, 0.74, 0.78), 12)
+	jante.rotation_degrees = Vector3(0.0, 0.0, 90.0)
+	jante.position = position
+	parent.add_child(jante)
+
+	var moyeu := cylindre(rayon * 0.16, 0.2, Color(0.30, 0.31, 0.34), 8)
+	moyeu.rotation_degrees = Vector3(0.0, 0.0, 90.0)
+	moyeu.position = position
+	parent.add_child(moyeu)
+
+
+static func _incline(noeud: Node3D, angles: Vector3) -> Node3D:
+	noeud.rotation_degrees = angles
+	return noeud
+
+
 static func _poser(parent: Node3D, taille: Vector3, couleur: Color,
 		position: Vector3) -> MeshInstance3D:
 	var n := boite(taille, couleur)
@@ -227,26 +267,164 @@ static func immeuble(graine: int) -> Node3D:
 	return n
 
 
-## La moto du joueur. Les deux couleurs viennent du garage : la carrosserie
-## depend de la moto achetee, le casque du choix du joueur. C'est la
-## personnalisation la moins chere a produire et la plus remarquee.
+## La moto du joueur, et son pilote.
+##
+## Vue de derriere a pleine vitesse, trois boites suffisaient. Dans le
+## garage on la regarde de pres, et trois boites ne sont pas une moto :
+## il faut des roues rondes, une fourche, un guidon, un pot, et quelqu'un
+## dessus qui tienne le guidon.
+##
+## Les deux couleurs viennent du garage : la carrosserie depend de la moto
+## achetee, le casque du choix du joueur.
 static func moto(couleur_corps := Color(0.78, 0.16, 0.14),
 		couleur_casque := Color(0.94, 0.86, 0.30)) -> Node3D:
 	var n := Node3D.new()
-	_poser(n, Vector3(0.62, 0.5, 1.9), couleur_corps,
-			Vector3(0.0, 0.62, 0.0))
-	_poser(n, Vector3(0.26, 0.62, 0.62), Color(0.10, 0.10, 0.11),
-			Vector3(0.0, 0.32, -0.85))
-	_poser(n, Vector3(0.26, 0.62, 0.62), Color(0.10, 0.10, 0.11),
-			Vector3(0.0, 0.32, 0.85))
-	_poser(n, Vector3(1.0, 0.12, 0.12), Color(0.20, 0.20, 0.22),
-			Vector3(0.0, 0.98, -0.62))
-	_poser(n, Vector3(0.52, 0.62, 0.42), Color(0.20, 0.32, 0.62),
-			Vector3(0.0, 1.14, 0.18))
-	_poser(n, Vector3(0.44, 0.42, 0.46), couleur_casque,
-			Vector3(0.0, 1.62, 0.14))
-	# Une bande de carrosserie sur le reservoir : elle rappelle la couleur
-	# de la moto la ou l'oeil du joueur est pose en permanence.
-	_poser(n, Vector3(0.30, 0.06, 0.9), couleur_corps.lightened(0.35),
-			Vector3(0.0, 0.88, 0.1))
+	var sombre := Color(0.16, 0.16, 0.18)
+	var chrome := Color(0.78, 0.80, 0.84)
+
+	roue(n, 0.34, Vector3(0.0, 0.34, -0.86))
+	roue(n, 0.34, Vector3(0.0, 0.34, 0.80))
+
+	# Fourche avant : deux tubes inclines, qui montent vers le guidon.
+	for cote in [-0.16, 0.16]:
+		var tube := cylindre(0.045, 0.86, chrome, 8)
+		tube.position = Vector3(cote, 0.66, -0.79)
+		tube.rotation_degrees = Vector3(16.0, 0.0, 0.0)
+		n.add_child(tube)
+
+	# Garde-boue avant et arriere.
+	_poser(n, Vector3(0.24, 0.06, 0.5), couleur_corps,
+			Vector3(0.0, 0.70, -0.88))
+	_poser(n, Vector3(0.26, 0.06, 0.55), couleur_corps,
+			Vector3(0.0, 0.72, 0.82))
+
+	# Bloc moteur, sous le reservoir.
+	_poser(n, Vector3(0.34, 0.34, 0.52), Color(0.24, 0.25, 0.28),
+			Vector3(0.0, 0.42, -0.08))
+	for cote in [-0.22, 0.22]:
+		var cache := cylindre(0.14, 0.08, Color(0.55, 0.56, 0.60), 10)
+		cache.rotation_degrees = Vector3(0.0, 0.0, 90.0)
+		cache.position = Vector3(cote, 0.44, -0.08)
+		n.add_child(cache)
+
+	# Cadre, reservoir, selle.
+	_poser(n, Vector3(0.18, 0.14, 1.5), sombre, Vector3(0.0, 0.62, 0.0))
+	_poser(n, Vector3(0.36, 0.26, 0.62), couleur_corps,
+			Vector3(0.0, 0.82, -0.28))
+	_poser(n, Vector3(0.30, 0.10, 0.42), couleur_corps.lightened(0.32),
+			Vector3(0.0, 0.96, -0.30))
+	_poser(n, Vector3(0.34, 0.13, 0.62), Color(0.12, 0.12, 0.14),
+			Vector3(0.0, 0.86, 0.30))
+	# Carenages lateraux : ils donnent sa silhouette a la machine.
+	for cote in [-0.20, 0.20]:
+		_poser(n, Vector3(0.06, 0.30, 0.70), couleur_corps,
+				Vector3(cote, 0.68, -0.20))
+
+	# Guidon, poignees, retroviseurs, phare.
+	_poser(n, Vector3(0.74, 0.055, 0.055), sombre, Vector3(0.0, 1.02, -0.74))
+	for cote in [-0.34, 0.34]:
+		_poser(n, Vector3(0.14, 0.07, 0.07), Color(0.10, 0.10, 0.12),
+				Vector3(cote, 1.02, -0.74))
+		var tige := cylindre(0.018, 0.16, sombre, 6)
+		tige.position = Vector3(cote * 0.86, 1.12, -0.76)
+		n.add_child(tige)
+		_poser(n, Vector3(0.11, 0.07, 0.03), Color(0.60, 0.68, 0.76),
+				Vector3(cote * 0.86, 1.20, -0.76))
+
+	var phare := cylindre(0.13, 0.08, Color(0.98, 0.96, 0.80), 10)
+	phare.rotation_degrees = Vector3(90.0, 0.0, 0.0)
+	phare.position = Vector3(0.0, 0.92, -0.94)
+	n.add_child(phare)
+	_poser(n, Vector3(0.10, 0.06, 0.04), Color(0.90, 0.16, 0.12),
+			Vector3(0.0, 0.94, 1.02))
+
+	# Pot d'echappement.
+	var pot := cylindre(0.06, 0.8, chrome, 8)
+	pot.rotation_degrees = Vector3(90.0, 0.0, 0.0)
+	pot.position = Vector3(0.19, 0.40, 0.36)
+	n.add_child(pot)
+
+	# Repose-pieds.
+	for cote in [-0.26, 0.26]:
+		_poser(n, Vector3(0.16, 0.04, 0.08), sombre,
+				Vector3(cote, 0.38, 0.06))
+
+	n.add_child(pilote(couleur_casque))
+	_alleger_les_ombres(n)
+	return n
+
+
+## Coupe la projection d'ombre sur les petites pieces.
+##
+## Chaque objet qui projette une ombre est dessine deux fois : une fois a
+## l'ecran, une fois dans la carte d'ombres. Une moto detaillee compte une
+## trentaine de pieces, donc soixante appels de rendu — un sixieme du
+## budget d'un telephone de 2021 pour une seule machine.
+##
+## Un retroviseur, un moyeu ou un repose-pied ne projettent rien qu'on
+## puisse distinguer. Seules les grosses pieces gardent leur ombre, et la
+## silhouette au sol reste la meme.
+static func _alleger_les_ombres(racine: Node3D, seuil := 0.035) -> void:
+	for enfant in racine.get_children():
+		if enfant is MeshInstance3D:
+			var forme: MeshInstance3D = enfant
+			var taille: Vector3 = forme.mesh.get_aabb().size
+			if taille.x * taille.y * taille.z < seuil:
+				forme.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if enfant is Node3D:
+			_alleger_les_ombres(enfant, seuil)
+
+
+## Le pilote. Il doit tenir le guidon et plier les jambes, sinon il a
+## l'air pose sur la moto au lieu d'etre dessus.
+static func pilote(couleur_casque: Color) -> Node3D:
+	var n := Node3D.new()
+	var tenue := Color(0.20, 0.30, 0.58)
+	var peau := Color(0.42, 0.28, 0.18)
+
+	# Buste legerement penche vers l'avant.
+	var buste := Node3D.new()
+	buste.position = Vector3(0.0, 1.00, 0.14)
+	buste.rotation_degrees = Vector3(-26.0, 0.0, 0.0)
+	_poser(buste, Vector3(0.38, 0.46, 0.26), tenue, Vector3.ZERO)
+	_poser(buste, Vector3(0.40, 0.12, 0.28), tenue.darkened(0.25),
+			Vector3(0.0, -0.20, 0.0))
+	n.add_child(buste)
+
+	# Bras tendus vers les poignees.
+	#
+	# L'epaule est a (y 1,14 ; z -0,10), la poignee a (y 1,02 ; z -0,74) :
+	# le bras descend de 0,12 sur 0,64 d'avancee, soit onze degres sous
+	# l'horizontale. Une rotation POSITIVE autour de X releverait le bras,
+	# puisqu'elle amene +Y vers +Z : il faut donc un angle negatif.
+	for cote in [-1.0, 1.0]:
+		var bras := Node3D.new()
+		bras.position = Vector3(cote * 0.17, 1.14, -0.10)
+		bras.rotation_degrees = Vector3(-11.0, cote * -11.0, 0.0)
+		_poser(bras, Vector3(0.12, 0.12, 0.58), tenue, Vector3(0.0, 0.0, -0.29))
+		_poser(bras, Vector3(0.11, 0.11, 0.13), peau, Vector3(0.0, 0.0, -0.62))
+		n.add_child(bras)
+
+	# Cuisse a plat, tibia qui redescend vers le repose-pied.
+	for cote in [-1.0, 1.0]:
+		_poser(n, Vector3(0.17, 0.19, 0.44), tenue,
+				Vector3(cote * 0.19, 0.80, 0.22))
+		var tibia := Node3D.new()
+		tibia.position = Vector3(cote * 0.24, 0.62, 0.10)
+		tibia.rotation_degrees = Vector3(-24.0, 0.0, 0.0)
+		_poser(tibia, Vector3(0.15, 0.40, 0.16), tenue, Vector3.ZERO)
+		_poser(tibia, Vector3(0.15, 0.10, 0.26), Color(0.14, 0.13, 0.13),
+				Vector3(0.0, -0.22, -0.05))
+		n.add_child(tibia)
+
+	# Casque : calotte, visiere sombre, et une aeration sur le dessus.
+	var tete := Node3D.new()
+	tete.position = Vector3(0.0, 1.40, -0.10)
+	_poser(tete, Vector3(0.34, 0.34, 0.36), couleur_casque, Vector3.ZERO)
+	_poser(tete, Vector3(0.30, 0.14, 0.06), Color(0.10, 0.11, 0.14),
+			Vector3(0.0, 0.0, -0.18))
+	_poser(tete, Vector3(0.36, 0.06, 0.20), couleur_casque.darkened(0.3),
+			Vector3(0.0, 0.16, 0.02))
+	n.add_child(tete)
+
 	return n
