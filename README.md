@@ -80,6 +80,31 @@ n'utilise.
 Mesuré sur un portable de 2018 à carte graphique intégrée : **60 images
 par seconde, 6 560 triangles, 387 appels de rendu.**
 
+## Le texte affiché reste en pur ASCII
+
+La police embarquée par Godot ne couvre que le latin. Les symboles
+décoratifs — ◉ ★ ♥ ▮ ✓ — s'affichaient en carré vide dans l'export web, et
+feraient de même sur un téléphone sans police de secours riche. Tout ce qui
+s'affiche est donc écrit en caractères latins simples. C'est moins joli
+d'un cheveu et lisible partout, ce qui compte davantage.
+
+## Publier sur le web
+
+```
+Godot_v4.7.1-stable_win64_console.exe --headless --path . --export-release "Web" ../export_web/index.html
+```
+
+Environ 40 Mo, dont **79 Ko pour le jeu** — le reste est le moteur, mis en
+cache après la première visite. L'export est fait **sans fils
+d'exécution**, exprès : il peut alors être hébergé sur n'importe quel
+hébergeur statique gratuit, GitHub Pages compris, qui ne permet pas de
+choisir ses en-têtes HTTP.
+
+Pour l'essayer en local, `python export_web/serveur.py` puis
+`http://127.0.0.1:8777`. Le serveur simple de Python ne convient pas : il
+tronque le fichier de 40 Mo de soixante kilo-octets sous Windows, et le
+moteur refuse alors de démarrer.
+
 ## Vérifier que ça marche
 
 ```
@@ -151,6 +176,17 @@ Le **klaxon** range les véhicules devant toi. C'est le geste le plus banal
 de Bamako et aucun jeu de ce genre ne le propose. Il ne rend pas
 invincible : il ouvre un passage, et seulement si celui d'en face a la
 place de se pousser — un tas de sable n'entend rien.
+
+## Les défis à échéance
+
+Trois par jour, un par semaine, un par mois. Leur intérêt n'est pas la
+récompense, c'est l'échéance : un défi commence et se termine, qu'on l'ait
+fini ou non. C'est ce qui donne une raison de revenir demain plutôt que
+dans trois semaines.
+
+Ils sont tirés de la **date**, pas du hasard : deux joueurs qui ouvrent le
+jeu le même jour reçoivent les mêmes défis. On peut donc en parler
+ensemble, ce qui vaut bien plus que trois objectifs personnels.
 
 ## Le défi par code
 

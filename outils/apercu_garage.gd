@@ -11,7 +11,7 @@ func _ready() -> void:
 		if str(m["cle"]) not in Donnees.motos_possedees:
 			Donnees.motos_possedees.append(str(m["cle"]))
 
-	for i in range(Catalogue.MOTOS.size()):
+	for i in range(1):
 		Donnees.moto_choisie = str(Catalogue.MOTOS[i]["cle"])
 		var garage := load("res://scenes/garage.tscn").instantiate()
 		add_child(garage)

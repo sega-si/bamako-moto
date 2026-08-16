@@ -23,6 +23,12 @@ var records: Dictionary = {}
 ## WhatsApp, l'autre le tape, et les deux scores se comparent.
 var code_defi: String = ""
 
+## Les defis en cours et leur avancement, ranges par duree.
+## Chaque entree garde l'etiquette de sa periode : quand la date change,
+## l'etiquette ne correspond plus, les defis sont remplaces et ce qui
+## n'etait pas fini est perdu. C'est l'echeance qui fait revenir.
+var defis: Dictionary = {}
+
 
 ## Transforme un code lisible en graine de generateur. Deux codes
 ## identiques donnent forcement la meme route.
@@ -54,6 +60,8 @@ func charger() -> void:
 	casque_choisi = int(f.get_value("joueur", "casque", 0))
 	mode_choisi = str(f.get_value("joueur", "mode", "sans_fin"))
 	records = f.get_value("joueur", "records", {})
+	defis = f.get_value("joueur", "defis", {})
+	rafraichir_defis()
 
 	# On repart du tableau enregistre, en garantissant que la moto de
 	# depart y figure toujours : sinon un fichier abime laisserait le
@@ -75,7 +83,67 @@ func enregistrer() -> void:
 	f.set_value("joueur", "casque", casque_choisi)
 	f.set_value("joueur", "mode", mode_choisi)
 	f.set_value("joueur", "records", records)
+	f.set_value("joueur", "defis", defis)
 	f.save(FICHIER)
+
+
+## Remplace les defis dont la periode est passee.
+##
+## Rien n'est reporte : un defi commence et se termine. C'est exactement ce
+## qui donne une raison de revenir demain.
+func rafraichir_defis() -> void:
+	var periodes := {
+		"jour": [Defis.etiquette_jour(), Defis.du_jour()],
+		"semaine": [Defis.etiquette_semaine(), Defis.de_la_semaine()],
+		"mois": [Defis.etiquette_mois(), Defis.du_mois()],
+	}
+	for duree in periodes:
+		var etiquette: String = periodes[duree][0]
+		var courant: Dictionary = defis.get(duree, {})
+		if str(courant.get("etiquette", "")) == etiquette:
+			continue
+		var liste: Array = []
+		for d in periodes[duree][1]:
+			var copie: Dictionary = (d as Dictionary).duplicate()
+			copie["progres"] = 0
+			copie["paye"] = false
+			liste.append(copie)
+		defis[duree] = {"etiquette": etiquette, "liste": liste}
+
+
+## Fait avancer tous les defis qui suivent ce genre d'action.
+##
+## Renvoie la liste de ceux qui viennent d'etre termines, pour que l'ecran
+## de fin puisse l'annoncer au moment ou le joueur le merite.
+func avancer_defis(genre: String, quantite: int,
+		remplace := false) -> Array[String]:
+	var acheves: Array[String] = []
+	for duree in defis:
+		for d in defis[duree]["liste"]:
+			if str(d["cle"]) != genre or bool(d["paye"]):
+				continue
+			# « record » ne s'additionne pas : on garde le meilleur.
+			if remplace:
+				d["progres"] = maxi(int(d["progres"]), quantite)
+			else:
+				d["progres"] = int(d["progres"]) + quantite
+			if int(d["progres"]) >= int(d["cible"]):
+				d["progres"] = int(d["cible"])
+				d["paye"] = true
+				pieces += int(d["recompense"])
+				acheves.append("%s  +%d F" % [d["texte"], int(d["recompense"])])
+	if not acheves.is_empty():
+		enregistrer()
+	return acheves
+
+
+## Les defis en cours, a plat, pour l'affichage.
+func liste_defis() -> Array:
+	var tout: Array = []
+	for duree in ["jour", "semaine", "mois"]:
+		for d in defis.get(duree, {}).get("liste", []):
+			tout.append(d)
+	return tout
 
 
 func possede(cle: String) -> bool:

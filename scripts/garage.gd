@@ -18,6 +18,7 @@ var _description: Label
 var _pouvoir: Label
 var _champ_code: LineEdit
 var _titre_couleur: Label
+var _liste_defis: VBoxContainer
 var _stats: Label
 var _cagnotte: Label
 var _bouton_action: Button
@@ -129,7 +130,7 @@ func _construire_interface() -> void:
 
 	colonne.add_child(_titre("BAMAKO MOTO", 54, Color(1.0, 0.84, 0.20)))
 
-	_cagnotte = _titre("◉ 0", 34, Color(1.0, 0.84, 0.20))
+	_cagnotte = _titre("0 F", 34, Color(1.0, 0.84, 0.20))
 	colonne.add_child(_cagnotte)
 
 	# On laisse respirer : la moto en 3D occupe cette place.
@@ -154,7 +155,7 @@ func _construire_interface() -> void:
 	ligne.add_theme_constant_override("separation", 12)
 	colonne.add_child(ligne)
 
-	var precedent := _bouton("◀", 34)
+	var precedent := _bouton("<", 34)
 	precedent.custom_minimum_size = Vector2(80.0, 62.0)
 	precedent.pressed.connect(func(): _changer(-1))
 	ligne.add_child(precedent)
@@ -168,7 +169,7 @@ func _construire_interface() -> void:
 	_stats.autowrap_mode = TextServer.AUTOWRAP_OFF
 	milieu.add_child(_stats)
 
-	var suivant := _bouton("▶", 34)
+	var suivant := _bouton(">", 34)
 	suivant.custom_minimum_size = Vector2(80.0, 62.0)
 	suivant.pressed.connect(func(): _changer(1))
 	ligne.add_child(suivant)
@@ -223,7 +224,16 @@ func _construire_interface() -> void:
 	_record = _titre("", 24, Color(0.80, 0.84, 0.90))
 	colonne.add_child(_record)
 
-	# --- le defi
+	# --- les defis a duree limitee
+	#
+	# Leur interet n'est pas la recompense, c'est l'echeance affichee a
+	# cote. « Il reste 5 h » fait revenir ; « +30 pièces » non.
+	colonne.add_child(_titre("Défis", 24, Color(0.80, 0.84, 0.90)))
+	_liste_defis = VBoxContainer.new()
+	_liste_defis.add_theme_constant_override("separation", 4)
+	colonne.add_child(_liste_defis)
+
+	# --- le defi partage
 	#
 	# Deux joueurs qui tapent le meme code affrontent exactement la meme
 	# route. Il n'y a pas de serveur : le code EST la partie. On l'envoie
@@ -242,7 +252,7 @@ func _construire_interface() -> void:
 	_champ_code.text = Donnees.code_defi
 	ligne_defi.add_child(_champ_code)
 
-	var effacer := _bouton("✕", 26)
+	var effacer := _bouton("X", 26)
 	effacer.custom_minimum_size = Vector2(70.0, 62.0)
 	effacer.pressed.connect(func():
 		_champ_code.text = ""
@@ -309,16 +319,16 @@ func _rafraichir() -> void:
 	_nom.text = str(moto["nom"])
 	# Sur une voiture il n'y a pas de casque : la couleur va sur le toit.
 	_titre_couleur.text = "Casque" if str(moto.get("type", "moto")) == "moto" 			else "Couleur du toit"
-	_pouvoir.text = "★ " + str(moto["pouvoir_nom"])
+	_pouvoir.text = "* " + str(moto["pouvoir_nom"])
 	_description.text = str(moto["pouvoir_texte"])
-	_cagnotte.text = "◉ %d" % Donnees.pieces
+	_cagnotte.text = "%d F" % Donnees.pieces
 
 	# Des barres plutot que des nombres : on compare deux motos d'un coup
 	# d'oeil, ce qu'un « 1.22 » ne permet pas.
 	_stats.text = "%s vitesse    %s tenue    %s" % [
 			_barre(float(moto["vitesse"])),
 			_barre(float(moto["tenue"])),
-			"♥".repeat(int(moto["casse"]))]
+			"|".repeat(int(moto["casse"]))]
 
 	if possedee and Donnees.moto_choisie == cle:
 		_bouton_action.text = "Choisie"
@@ -327,7 +337,7 @@ func _rafraichir() -> void:
 		_bouton_action.text = "Prendre celle-ci"
 		_bouton_action.disabled = false
 	else:
-		_bouton_action.text = "Acheter — ◉ %d" % int(moto["prix"])
+		_bouton_action.text = "Acheter — %d F" % int(moto["prix"])
 		_bouton_action.disabled = not Donnees.peut_acheter(cle)
 
 	for i in range(_pastilles.size()):
@@ -342,13 +352,32 @@ func _rafraichir() -> void:
 	if _champ_code != null and not _champ_code.text.strip_edges().is_empty():
 		_record.text = "Défi %s — même route pour vous deux" 				% _champ_code.text.strip_edges()
 
+	_afficher_defis()
 	_montrer(moto)
+
+
+func _afficher_defis() -> void:
+	for enfant in _liste_defis.get_children():
+		enfant.queue_free()
+
+	for d in Donnees.liste_defis():
+		var fait := bool(d["paye"])
+		var ligne := _titre("", 20,
+				Color(0.45, 1.0, 0.55) if fait else Color(0.90, 0.90, 0.92))
+		ligne.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		if fait:
+			ligne.text = "OK  %s" % str(d["texte"])
+		else:
+			ligne.text = "%s  —  %d/%d  ·  reste %s" % [str(d["texte"]),
+					int(d["progres"]), int(d["cible"]),
+					Defis.temps_restant(str(d["duree"]))]
+		_liste_defis.add_child(ligne)
 
 
 func _barre(valeur: float) -> String:
 	# Les valeurs utiles vont de 0,8 a 1,25 : on les etale sur cinq crans.
 	var crans := clampi(int(round((valeur - 0.75) / 0.12)), 1, 5)
-	return "▮".repeat(crans) + "▯".repeat(5 - crans)
+	return "|".repeat(crans) + ".".repeat(5 - crans)
 
 
 func _montrer(moto: Dictionary) -> void:

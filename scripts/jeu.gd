@@ -65,6 +65,11 @@ var _prochain_bidon: float = 120.0
 ## faire une touche a marteler.
 var _klaxon_pret: float = 0.0
 
+## Compteurs de la partie, verses aux defis a la fin.
+var _turbos_utilises: int = 0
+var _klaxons: int = 0
+var _frolements: int = 0
+
 @onready var _moto: Area3D = $Moto
 @onready var _obstacles: Node3D = $Obstacles
 @onready var _camera: Camera3D = $Camera
@@ -164,9 +169,9 @@ func _process(delta: float) -> void:
 				int(distance + _bonus)]
 	else:
 		_score.text = "%d m" % int(distance + _bonus)
-	_compteur_pieces.text = "◉ %d" % pieces
+	_compteur_pieces.text = "%d F" % pieces
 	if _vies > 1:
-		_compteur_pieces.text += "   " + "♥".repeat(_vies - 1)
+		_compteur_pieces.text += "   " + "|".repeat(_vies - 1)
 
 
 func _faire_defiler(avance: float) -> void:
@@ -296,10 +301,11 @@ func _gerer_frolements() -> void:
 			# « Sang-froid » : la Rapide compte double a chaque frolement,
 			# donc son combo grimpe deux fois plus vite. C'est la moto de
 			# celui qui joue au plus pres.
+			_frolements += 1
 			_combo += 2 if _pouvoir == "frolement_double" else 1
 			_combo_restant = 2.5
 			_bonus += 10.0 * float(_combo)
-			_annoncer("Frôlé !  ×%d" % _combo if _combo > 1 else "Frôlé !")
+			_annoncer("Frôlé !  x%d" % _combo if _combo > 1 else "Frôlé !")
 
 
 func _gerer_turbo(delta: float) -> void:
@@ -313,6 +319,7 @@ func _gerer_turbo(delta: float) -> void:
 	if Input.is_action_just_pressed("turbo") and _charges > 0 			and _turbo_restant <= 0.0:
 		_charges -= 1
 		_turbo_restant = 4.0
+		_turbos_utilises += 1
 		# Pendant le turbo on traverse : le repit du vehicule blinde sert
 		# exactement a ca, on le reutilise plutot que d'inventer un second
 		# mecanisme d'invulnerabilite.
@@ -325,7 +332,7 @@ func _gerer_turbo(delta: float) -> void:
 
 	var lignes: Array[String] = []
 	if _charges > 0:
-		lignes.append("⛽ %d — espace" % _charges)
+		lignes.append("Turbo pret x%d — espace" % _charges)
 	if _turbo_restant > 0.0:
 		lignes.append("TURBO %.1f s" % _turbo_restant)
 	if _klaxon_pret > 0.0:
@@ -343,6 +350,7 @@ func _klaxonner() -> void:
 	## le propose. Il ne rend pas invincible : il ouvre un passage, si le
 	## conducteur d'en face a la place de se pousser.
 	_klaxon_pret = 7.0
+	_klaxons += 1
 	var pousses := 0
 	for o in _obstacles.get_children():
 		if not "vitesse_propre" in o or o.position.z > -8.0 				or o.position.z < -55.0:
@@ -415,7 +423,7 @@ func _terminer(temps_ecoule := false) -> void:
 	_annonce.modulate.a = 0.0
 
 	var total := int(distance + _bonus)
-	_score_final.text = "%d points   ◉ %d" % [total, pieces]
+	_score_final.text = "%d points   %d F" % [total, pieces]
 
 	# Sans defi en cours, on en propose un : le code de la partie qu'on
 	# vient de jouer. C'est le moment ou l'envie de defier quelqu'un est la
@@ -426,6 +434,23 @@ func _terminer(temps_ecoule := false) -> void:
 	else:
 		$Interface/Fin/Defi.text = "Défi %s — envoie ton score" % _code
 	$Interface/Fin/Titre.text = "Temps écoulé" if temps_ecoule else "Touché !"
+
+	# Les defis avancent une seule fois, a la fin : pendant la partie le
+	# joueur n'a pas la tete a lire des annonces de progression.
+	var acheves: Array[String] = []
+	acheves.append_array(Donnees.avancer_defis("parties", 1))
+	acheves.append_array(Donnees.avancer_defis("pieces", pieces))
+	acheves.append_array(Donnees.avancer_defis("distance", int(distance)))
+	acheves.append_array(Donnees.avancer_defis("frolements", _frolements))
+	acheves.append_array(Donnees.avancer_defis("turbos", _turbos_utilises))
+	acheves.append_array(Donnees.avancer_defis("klaxons", _klaxons))
+	acheves.append_array(Donnees.avancer_defis("record", total, true))
+	if not acheves.is_empty():
+		$Interface/Fin/Defis.text = "Défi réussi !
+" + "
+".join(acheves)
+	else:
+		$Interface/Fin/Defis.text = ""
 
 	if Donnees.terminer_partie(Donnees.mode_choisi, total, pieces):
 		_record.text = "Nouveau record !"
