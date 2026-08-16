@@ -8,6 +8,7 @@ extends Node3D
 const TRONCON := preload("res://scenes/troncon.tscn")
 const OBSTACLE := preload("res://scenes/obstacle.tscn")
 const PIECE := preload("res://scenes/piece.tscn")
+const BIDON := preload("res://scenes/bidon.tscn")
 
 const NOMBRE_TRONCONS := 12
 const LARGEUR_VOIE := 3.0
@@ -54,6 +55,16 @@ var _pouvoir: String = ""
 var _temps_ecoule: float = 0.0
 var _code: String = ""
 
+## Le turbo : une charge se ramasse, se declenche, et dure quelques
+## secondes pendant lesquelles on traverse la circulation.
+var _charges: int = 0
+var _turbo_restant: float = 0.0
+var _prochain_bidon: float = 120.0
+
+## Le klaxon : les vehicules devant se rabattent. Un delai empeche d'en
+## faire une touche a marteler.
+var _klaxon_pret: float = 0.0
+
 @onready var _moto: Area3D = $Moto
 @onready var _obstacles: Node3D = $Obstacles
 @onready var _camera: Camera3D = $Camera
@@ -63,6 +74,9 @@ var _code: String = ""
 @onready var _fin: VBoxContainer = $Interface/Fin
 @onready var _score_final: Label = $Interface/Fin/ScoreFinal
 @onready var _record: Label = $Interface/Fin/Record
+@onready var _monde: WorldEnvironment = $Monde
+@onready var _soleil: DirectionalLight3D = $Soleil
+@onready var _etat: Label = $Interface/Etat
 
 
 
@@ -130,13 +144,19 @@ func _process(delta: float) -> void:
 
 	vitesse = minf(vitesse + acceleration * rattrapage * delta,
 			vitesse_maximale)
-	var avance := vitesse * delta
+	# Pendant le turbo on va bien plus vite que le plafond ordinaire :
+	# c'est tout l'interet, et le champ de vision suit.
+	var allure := vitesse * (1.9 if _turbo_restant > 0.0 else 1.0)
+	var avance := allure * delta
 	distance += avance
+
+	Ciel.appliquer(_monde.environment, _soleil, Ciel.avancee(distance))
 
 	_faire_defiler(avance)
 	_gerer_apparitions()
 	_gerer_frolements()
 	_gerer_combo(delta)
+	_gerer_turbo(delta)
 	_animer_camera(delta)
 
 	if float(_mode["duree"]) > 0.0:
@@ -156,12 +176,22 @@ func _faire_defiler(avance: float) -> void:
 			t.position.z -= 20.0 * float(NOMBRE_TRONCONS)
 
 	for o in _obstacles.get_children():
-		o.vitesse_du_jeu = vitesse
+		o.vitesse_du_jeu = vitesse * (1.9 if _turbo_restant > 0.0 else 1.0)
 
 
 func _gerer_apparitions() -> void:
 	if distance >= _prochaine_piece:
 		_faire_apparaitre_pieces()
+
+	if distance >= _prochain_bidon:
+		var bidon := BIDON.instantiate()
+		_obstacles.add_child(bidon)
+		bidon.position = Vector3(VOIES[randi() % 3], 1.1, DEPART_Z)
+		bidon.vitesse_du_jeu = vitesse
+		bidon.ramasse.connect(func() -> void:
+			_charges += 1
+			_annoncer("Bidon ! Espace pour le turbo"))
+		_prochain_bidon = distance + randf_range(240.0, 380.0)
 
 	if distance < _prochaine_apparition:
 		return
@@ -235,8 +265,11 @@ func _faire_apparaitre_pieces() -> void:
 
 
 func _sur_piece_ramassee(_ou: Vector3) -> void:
-	pieces += 1
-	_bonus += 5.0
+	# « Course payante » : le Taxi est paye double. C'est ce qui compense
+	# sa largeur, qui lui ferme la moitie des passages.
+	var gain := 2 if _pouvoir == "course_payante" else 1
+	pieces += gain
+	_bonus += 5.0 * float(gain)
 	# En Chrono, une piece rallonge la partie. C'est ce qui transforme la
 	# collecte en vraie decision : aller la chercher coute du risque mais
 	# rend du temps.
@@ -269,6 +302,63 @@ func _gerer_frolements() -> void:
 			_annoncer("Frôlé !  ×%d" % _combo if _combo > 1 else "Frôlé !")
 
 
+func _gerer_turbo(delta: float) -> void:
+	_klaxon_pret = maxf(_klaxon_pret - delta, 0.0)
+
+	if _turbo_restant > 0.0:
+		_turbo_restant -= delta
+		if _turbo_restant <= 0.0:
+			_moto.modulate_turbo(false)
+
+	if Input.is_action_just_pressed("turbo") and _charges > 0 			and _turbo_restant <= 0.0:
+		_charges -= 1
+		_turbo_restant = 4.0
+		# Pendant le turbo on traverse : le repit du vehicule blinde sert
+		# exactement a ca, on le reutilise plutot que d'inventer un second
+		# mecanisme d'invulnerabilite.
+		_moto.accorder_repit(4.0)
+		_moto.modulate_turbo(true)
+		_annoncer("TURBO !")
+
+	if Input.is_action_just_pressed("klaxon") and _klaxon_pret <= 0.0:
+		_klaxonner()
+
+	var lignes: Array[String] = []
+	if _charges > 0:
+		lignes.append("⛽ %d — espace" % _charges)
+	if _turbo_restant > 0.0:
+		lignes.append("TURBO %.1f s" % _turbo_restant)
+	if _klaxon_pret > 0.0:
+		lignes.append("klaxon %.0f s" % _klaxon_pret)
+	else:
+		lignes.append("klaxon — K")
+	_etat.text = "
+".join(lignes)
+
+
+func _klaxonner() -> void:
+	## Les vehicules devant se rangent.
+	##
+	## C'est le geste le plus banal de Bamako, et aucun jeu de ce genre ne
+	## le propose. Il ne rend pas invincible : il ouvre un passage, si le
+	## conducteur d'en face a la place de se pousser.
+	_klaxon_pret = 7.0
+	var pousses := 0
+	for o in _obstacles.get_children():
+		if not "vitesse_propre" in o or o.position.z > -8.0 				or o.position.z < -55.0:
+			continue
+		if o.vitesse_propre <= 1.0:
+			continue  # un tas de sable n'entend pas
+		if absf(o.position.x - _moto.position.x) > 2.2:
+			continue
+		# On le pousse vers le bord le plus proche, jamais vers le centre
+		# ou il generait encore.
+		var vers := VOIES[0] if o.position.x > 0.0 else VOIES[2]
+		o.faire_deriver(vers)
+		pousses += 1
+	_annoncer("Pouet !  %d rangé%s" % [pousses, "s" if pousses > 1 else ""] 			if pousses > 0 else "Pouet !")
+
+
 func _gerer_combo(delta: float) -> void:
 	if _combo_restant > 0.0:
 		_combo_restant -= delta
@@ -290,8 +380,10 @@ func _animer_camera(delta: float) -> void:
 	# Le champ de vision s'ouvre avec la vitesse. C'est le plus vieux truc
 	# du jeu de course, et le plus efficace : on ne calcule pas la vitesse,
 	# on la ressent.
-	_camera.fov = lerpf(_camera.fov, 62.0 + avancement * 14.0,
-			clampf(delta * 2.0, 0.0, 1.0))
+	var vise_fov := 62.0 + avancement * 14.0
+	if _turbo_restant > 0.0:
+		vise_fov += 16.0
+	_camera.fov = lerpf(_camera.fov, vise_fov, clampf(delta * 3.0, 0.0, 1.0))
 
 	var tremblement := Vector2.ZERO
 	if _secousse > 0.0:

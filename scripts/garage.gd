@@ -17,6 +17,7 @@ var _nom: Label
 var _description: Label
 var _pouvoir: Label
 var _champ_code: LineEdit
+var _titre_couleur: Label
 var _stats: Label
 var _cagnotte: Label
 var _bouton_action: Button
@@ -186,7 +187,8 @@ func _construire_interface() -> void:
 	colonne.add_child(_bouton_action)
 
 	# --- le casque
-	colonne.add_child(_titre("Casque", 24, Color(0.80, 0.84, 0.90)))
+	_titre_couleur = _titre("Casque", 24, Color(0.80, 0.84, 0.90))
+	colonne.add_child(_titre_couleur)
 	var couleurs := HBoxContainer.new()
 	couleurs.add_theme_constant_override("separation", 8)
 	couleurs.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -305,6 +307,8 @@ func _rafraichir() -> void:
 	var possedee := Donnees.possede(cle)
 
 	_nom.text = str(moto["nom"])
+	# Sur une voiture il n'y a pas de casque : la couleur va sur le toit.
+	_titre_couleur.text = "Casque" if str(moto.get("type", "moto")) == "moto" 			else "Couleur du toit"
 	_pouvoir.text = "★ " + str(moto["pouvoir_nom"])
 	_description.text = str(moto["pouvoir_texte"])
 	_cagnotte.text = "◉ %d" % Donnees.pieces
@@ -350,7 +354,7 @@ func _barre(valeur: float) -> String:
 func _montrer(moto: Dictionary) -> void:
 	if _apercu != null:
 		_apercu.queue_free()
-	_apercu = Fabrique.moto(moto["couleur"],
+	_apercu = Fabrique.vehicule_joueur(moto,
 			Catalogue.CASQUES[Donnees.casque_choisi]["couleur"])
 	# Legerement de trois quarts : une moto vue pile de face ne montre ni
 	# sa longueur ni son pilote.

@@ -122,6 +122,35 @@ différemment que si elles permettent des choses différentes.
 | La Rapide | 260 | **Sang-froid** — les frôlements comptent double |
 | La Cuirassée | 420 | **Blindée** — encaisse un choc et repart |
 | La Dorée | 900 | **Aimant à pièces** — les pièces viennent à elle dans trois mètres |
+| Le Taxi | 600 | **Course payante** — chaque pièce en vaut deux |
+| Le Sotrama | 1500 | **Increvable** — encaisse deux chocs |
+
+Les deux derniers sont des quatre-roues : trois fois plus larges qu'une
+moto, donc la moitié des passages leur sont fermés. Ils ne se couchent pas
+dans les virages — une voiture qui s'incline comme une moto paraît fausse.
+
+## Le jour qui tombe
+
+À partir de sept cents mètres le soleil descend, le ciel rougit, puis la
+nuit tombe et le phare devient la seule chose qui montre la route.
+Personne ne s'y attend dans un jeu de ce genre. C'est gratuit — rien que
+des couleurs interpolées — et ça récompense une longue partie autrement
+que par un chiffre qui monte.
+
+Le passage se fait en deux temps, jour → crépuscule → nuit : un seul
+mélange du jour vers la nuit sauterait l'orange, qui est le plus beau
+moment. Sous l'horizon, le soleil cesse de calculer ses ombres.
+
+## Le turbo et le klaxon
+
+Un **bidon d'essence** apparaît tous les trois cents mètres environ. Il
+donne une charge de turbo : quatre secondes à près du double de l'allure,
+où l'on traverse la circulation au lieu de l'éviter.
+
+Le **klaxon** range les véhicules devant toi. C'est le geste le plus banal
+de Bamako et aucun jeu de ce genre ne le propose. Il ne rend pas
+invincible : il ouvre un passage, et seulement si celui d'en face a la
+place de se pousser — un tas de sable n'entend rien.
 
 ## Le défi par code
 

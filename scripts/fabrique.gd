@@ -187,6 +187,32 @@ static func piece() -> Node3D:
 	return n
 
 
+## Un bidon d'essence jaune, celui qu'on voit a tous les coins de rue.
+static func bidon() -> Node3D:
+	var n := Node3D.new()
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.98, 0.72, 0.10)
+	m.roughness = 0.4
+	m.emission_enabled = true
+	m.emission = Color(0.9, 0.55, 0.05)
+	m.emission_energy_multiplier = 0.5
+
+	var corps := BoxMesh.new()
+	corps.size = Vector3(0.55, 0.72, 0.34)
+	var noeud := MeshInstance3D.new()
+	noeud.mesh = corps
+	noeud.material_override = m
+	noeud.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	n.add_child(noeud)
+
+	_poser(n, Vector3(0.20, 0.16, 0.20), Color(0.20, 0.20, 0.22),
+			Vector3(0.0, 0.44, 0.0))
+	_poser(n, Vector3(0.36, 0.06, 0.06), Color(0.20, 0.20, 0.22),
+			Vector3(0.0, 0.40, -0.14))
+	_alleger_les_ombres(n, 1.0)
+	return n
+
+
 static func arbre(graine: int) -> Node3D:
 	var n := Node3D.new()
 	var hauteur := 2.4 + float(graine % 3) * 0.7
@@ -265,6 +291,31 @@ static func immeuble(graine: int) -> Node3D:
 		_poser(n, Vector3(1.6, 0.12, 4.4), Color(0.35, 0.35, 0.38),
 				Vector3(-largeur * 0.5 - 0.8, 2.9, 0.0))
 	return n
+
+
+## Le vehicule du joueur, quel qu'il soit.
+##
+## Le garage ne sait pas ce qu'il affiche et la partie ne sait pas ce
+## qu'elle pilote : les deux passent par ici. Ajouter un vehicule au
+## catalogue ne demande donc de toucher ni l'un ni l'autre.
+##
+## Sur une voiture, la couleur choisie par le joueur ne peut pas aller sur
+## un casque qu'on ne voit pas : elle va sur le toit, ou elle se remarque
+## autant.
+static func vehicule_joueur(modele: Dictionary,
+		couleur_choisie: Color) -> Node3D:
+	match str(modele.get("cle", "")):
+		"taxi":
+			var t := taxi()
+			_poser(t, Vector3(0.7, 0.16, 0.5), couleur_choisie,
+					Vector3(0.0, 2.0, 0.2))
+			return t
+		"sotrama":
+			var v := sotrama()
+			_poser(v, Vector3(1.4, 0.14, 2.6), couleur_choisie,
+					Vector3(0.0, 2.28, 0.0))
+			return v
+	return moto(modele["couleur"], couleur_choisie)
 
 
 ## La moto du joueur, et son pilote.

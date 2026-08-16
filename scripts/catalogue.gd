@@ -20,6 +20,8 @@ extends RefCounted
 const MOTOS := [
 	{
 		"cle": "vaillante",
+		"type": "moto",
+		"largeur": 0.50,
 		"nom": "La Vaillante",
 		"description": "Celle de tout le monde. Rien d'exceptionnel, rien à lui reprocher.",
 		"prix": 0,
@@ -33,6 +35,8 @@ const MOTOS := [
 	},
 	{
 		"cle": "souple",
+		"type": "moto",
+		"largeur": 0.25,
 		"nom": "La Souple",
 		"description": "Se faufile partout. Un peu lente, mais elle passe où les autres n'entrent pas.",
 		"prix": 120,
@@ -46,6 +50,8 @@ const MOTOS := [
 	},
 	{
 		"cle": "rapide",
+		"type": "moto",
+		"largeur": 0.50,
 		"nom": "La Rapide",
 		"description": "Va très vite et tourne mal. Les gros scores sont pour elle, les grosses chutes aussi.",
 		"prix": 260,
@@ -59,6 +65,8 @@ const MOTOS := [
 	},
 	{
 		"cle": "cuirassee",
+		"type": "moto",
+		"largeur": 0.55,
 		"nom": "La Cuirassée",
 		"description": "Encaisse un choc sans s'arrêter. Lourde, mais elle pardonne une erreur.",
 		"prix": 420,
@@ -72,6 +80,8 @@ const MOTOS := [
 	},
 	{
 		"cle": "doree",
+		"type": "moto",
+		"largeur": 0.50,
 		"nom": "La Dorée",
 		"description": "Rapide, maniable, et elle encaisse. Elle se mérite.",
 		"prix": 900,
@@ -82,6 +92,36 @@ const MOTOS := [
 		"pouvoir": "aimant",
 		"pouvoir_nom": "Aimant à pièces",
 		"pouvoir_texte": "Les pièces viennent à elle dans un rayon de trois mètres. Plus besoin d'aller les chercher.",
+	},
+	{
+		"cle": "taxi",
+		"nom": "Le Taxi",
+		"type": "voiture",
+		"description": "Quatre roues. Trois fois plus large qu'une moto : la moitié des trous ne sont plus pour toi.",
+		"prix": 600,
+		"vitesse": 1.05,
+		"tenue": 0.75,
+		"casse": 1,
+		"largeur": 1.45,
+		"couleur": Color(0.93, 0.74, 0.13),
+		"pouvoir": "course_payante",
+		"pouvoir_texte": "Chaque pièce en vaut deux. Tu es en course, on te paie.",
+		"pouvoir_nom": "Course payante",
+	},
+	{
+		"cle": "sotrama",
+		"nom": "Le Sotrama",
+		"type": "voiture",
+		"description": "Le minibus. Énorme, lent à se déplacer, et il ne s'arrête pas pour si peu.",
+		"prix": 1500,
+		"vitesse": 0.88,
+		"tenue": 0.60,
+		"casse": 3,
+		"largeur": 1.70,
+		"couleur": Color(0.13, 0.48, 0.25),
+		"pouvoir": "increvable",
+		"pouvoir_texte": "Encaisse deux chocs avant de s'arrêter. Rien ne lui fait peur, sauf les virages.",
+		"pouvoir_nom": "Increvable",
 	},
 ]
 

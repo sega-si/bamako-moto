@@ -28,13 +28,16 @@ var _doigt_pose: bool = false
 var _corps: Node3D
 var _poussiere: CPUParticles3D
 var _invulnerable_jusqua: float = 0.0
+var _est_une_moto: bool = true
+var _phare: SpotLight3D
 
 
 func _ready() -> void:
 	var modele := Catalogue.moto(Donnees.moto_choisie)
 	vitesse_laterale *= float(modele["tenue"])
 
-	_corps = Fabrique.moto(modele["couleur"],
+	_est_une_moto = str(modele.get("type", "moto")) == "moto"
+	_corps = Fabrique.vehicule_joueur(modele,
 			Catalogue.CASQUES[Donnees.casque_choisi]["couleur"])
 	add_child(_corps)
 
@@ -43,19 +46,52 @@ func _ready() -> void:
 	# Nettement plus etroite que la moto : on pardonne au joueur qui frole.
 	# Une collision ressentie comme injuste fait desinstaller un jeu.
 	#
-	# La Souple divise encore cette largeur par deux : c'est son pouvoir,
-	# et il se joue vraiment — elle passe dans des trous ou les autres
-	# accrochent.
-	var largeur := 0.5
-	if str(modele["pouvoir"]) == "etroite":
-		largeur = 0.25
-	boite.size = Vector3(largeur, 1.2, 1.5)
+	# La largeur vient du catalogue : 0,25 pour la Souple qui se faufile,
+	# 1,70 pour le Sotrama qui ne passe nulle part. C'est le chiffre qui
+	# decide vraiment de la difficulte d'un vehicule.
+	var largeur := float(modele.get("largeur", 0.5))
+	var hauteur := 1.2 if _est_une_moto else 1.9
+	var longueur := 1.5 if _est_une_moto else 3.4
+	boite.size = Vector3(largeur, hauteur, longueur)
 	forme.shape = boite
-	forme.position = Vector3(0.0, 0.6, 0.0)
+	forme.position = Vector3(0.0, hauteur * 0.5, 0.0)
 	add_child(forme)
 
+	_creer_phare()
 	_creer_poussiere()
+	if not _est_une_moto:
+		_poussiere.position = Vector3(0.0, 0.12, 1.8)
+		_poussiere.amount = 16
 	area_entered.connect(_sur_choc)
+
+
+func _creer_phare() -> void:
+	## Le faisceau qui eclaire la route la nuit.
+	##
+	## Il est allume en permanence : de jour on ne le voit pas, la nuit il
+	## devient la seule chose qui montre ou l'on va. Une lumiere allumee
+	## progressivement demanderait de savoir quelle heure il est, ce qui
+	## n'est pas l'affaire du vehicule.
+	_phare = SpotLight3D.new()
+	_phare.position = Vector3(0.0, 0.95, -0.9)
+	_phare.rotation_degrees = Vector3(-8.0, 0.0, 0.0)
+	_phare.light_color = Color(1.0, 0.95, 0.80)
+	_phare.light_energy = 6.0
+	_phare.spot_range = 34.0
+	_phare.spot_angle = 32.0
+	_phare.spot_angle_attenuation = 1.2
+	# Sans ombres : un projecteur qui en calcule coute une passe de rendu
+	# entiere, et de nuit personne ne remarque leur absence.
+	_phare.shadow_enabled = false
+	add_child(_phare)
+
+
+func modulate_turbo(actif: bool) -> void:
+	## Pendant le turbo, la poussiere devient un jet et le phare force.
+	_poussiere.amount = 60 if actif else 24
+	_poussiere.initial_velocity_max = 12.0 if actif else 5.0
+	_poussiere.color = Color(1.0, 0.72, 0.25, 0.85) if actif 			else Color(0.74, 0.64, 0.48, 0.75)
+	_phare.light_energy = 11.0 if actif else 6.0
 
 
 func _creer_poussiere() -> void:
@@ -123,10 +159,15 @@ func _process(delta: float) -> void:
 	# d'elle-meme a zero des que la moto cesse de se decaler.
 	var course := vitesse_laterale * delta if delta > 0.0 else 1.0
 	var vise := clampf((position.x - precedent) / course, -1.0, 1.0)
+	# Une moto se couche dans le virage, une voiture non : elle se contente
+	# de prendre du roulis. Les incliner pareil les ferait paraitre fausses
+	# toutes les deux.
+	var couche := inclinaison_max if _est_une_moto else 4.0
 	_corps.rotation_degrees.z = lerpf(_corps.rotation_degrees.z,
-			-vise * inclinaison_max, clampf(delta * 9.0, 0.0, 1.0))
+			-vise * couche, clampf(delta * 9.0, 0.0, 1.0))
 	_corps.rotation_degrees.y = lerpf(_corps.rotation_degrees.y,
-			-vise * 8.0, clampf(delta * 9.0, 0.0, 1.0))
+			-vise * (8.0 if _est_une_moto else 3.0),
+			clampf(delta * 9.0, 0.0, 1.0))
 
 
 func _unhandled_input(evenement: InputEvent) -> void:
