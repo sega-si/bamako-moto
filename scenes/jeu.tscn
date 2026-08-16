@@ -139,6 +139,16 @@ theme_override_constants/outline_size = 10
 text = "Record : 0 m"
 horizontal_alignment = 1
 
+[node name="Defi" type="Label" parent="Interface/Fin"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.45, 1, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
+theme_override_constants/outline_size = 10
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+
 [node name="Rejouer" type="Label" parent="Interface/Fin"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34

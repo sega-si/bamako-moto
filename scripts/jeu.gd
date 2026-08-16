@@ -50,6 +50,9 @@ var _secousse: float = 0.0
 var _combo: int = 0
 var _combo_restant: float = 0.0
 var _bonus: float = 0.0
+var _pouvoir: String = ""
+var _temps_ecoule: float = 0.0
+var _code: String = ""
 
 @onready var _moto: Area3D = $Moto
 @onready var _obstacles: Node3D = $Obstacles
@@ -64,6 +67,12 @@ var _bonus: float = 0.0
 
 
 func _ready() -> void:
+	# La graine doit etre posee AVANT tout tirage au sort, sinon la route
+	# ne serait pas reproductible. C'est la premiere ligne du demarrage.
+	_code = Donnees.code_defi
+	if not _code.is_empty():
+		seed(Donnees.graine_du_code(_code))
+
 	_mode = Catalogue.mode(Donnees.mode_choisi)
 	var moto := Catalogue.moto(Donnees.moto_choisie)
 
@@ -77,6 +86,12 @@ func _ready() -> void:
 	espacement_minimal *= float(_mode["densite"])
 	_vies = int(moto["casse"])
 	_temps_restant = float(_mode["duree"])
+	_pouvoir = str(moto["pouvoir"])
+
+	# « Depart en douceur » : la Vaillante commence plus lentement et
+	# rattrape en vingt secondes. C'est la moto de celui qui apprend.
+	if _pouvoir == "demarrage":
+		vitesse_depart *= 0.80
 
 	vitesse = vitesse_depart
 	_fin.hide()
@@ -106,7 +121,15 @@ func _process(delta: float) -> void:
 			_terminer(true)
 			return
 
-	vitesse = minf(vitesse + acceleration * delta, vitesse_maximale)
+	_temps_ecoule += delta
+	# La Vaillante rattrape son retard sur les vingt premieres secondes,
+	# puis se comporte comme les autres.
+	var rattrapage := 1.0
+	if _pouvoir == "demarrage" and _temps_ecoule < 20.0:
+		rattrapage = 2.4
+
+	vitesse = minf(vitesse + acceleration * rattrapage * delta,
+			vitesse_maximale)
 	var avance := vitesse * delta
 	distance += avance
 
@@ -201,6 +224,12 @@ func _faire_apparaitre_pieces() -> void:
 		_obstacles.add_child(piece)
 		piece.position = Vector3(VOIES[voie], 1.0, DEPART_Z - float(i) * 4.5)
 		piece.vitesse_du_jeu = vitesse
+		# « Aimant a pieces » : la Doree les attire dans un rayon de trois
+		# metres. Elle transforme la collecte en confort, ce qui justifie
+		# ses neuf cents pieces.
+		if _pouvoir == "aimant":
+			piece.aimant = 3.0
+			piece.cible = _moto
 		piece.ramassee.connect(_sur_piece_ramassee)
 	_prochaine_piece = distance + randf_range(55.0, 95.0)
 
@@ -231,7 +260,10 @@ func _gerer_frolements() -> void:
 		var demi_largeur: float = o.GABARITS[o.genre].x * 0.5
 		var ecart: float = absf(o.position.x - _moto.position.x)
 		if ecart < demi_largeur + distance_frolement:
-			_combo += 1
+			# « Sang-froid » : la Rapide compte double a chaque frolement,
+			# donc son combo grimpe deux fois plus vite. C'est la moto de
+			# celui qui joue au plus pres.
+			_combo += 2 if _pouvoir == "frolement_double" else 1
 			_combo_restant = 2.5
 			_bonus += 10.0 * float(_combo)
 			_annoncer("Frôlé !  ×%d" % _combo if _combo > 1 else "Frôlé !")
@@ -292,6 +324,15 @@ func _terminer(temps_ecoule := false) -> void:
 
 	var total := int(distance + _bonus)
 	_score_final.text = "%d points   ◉ %d" % [total, pieces]
+
+	# Sans defi en cours, on en propose un : le code de la partie qu'on
+	# vient de jouer. C'est le moment ou l'envie de defier quelqu'un est la
+	# plus forte.
+	if _code.is_empty():
+		_code = Donnees.nouveau_code()
+		$Interface/Fin/Defi.text = "Défie un ami avec le code  %s" % _code
+	else:
+		$Interface/Fin/Defi.text = "Défi %s — envoie ton score" % _code
 	$Interface/Fin/Titre.text = "Temps écoulé" if temps_ecoule else "Touché !"
 
 	if Donnees.terminer_partie(Donnees.mode_choisi, total, pieces):

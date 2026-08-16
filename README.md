@@ -111,13 +111,30 @@ de la boutique.
 
 ### Les motos
 
-| | Prix | Ce qu'elle vaut |
+Chacune a un **pouvoir** que les autres n'ont pas. Des statistiques
+différentes ne sont que des chiffres ; deux motos ne se jouent
+différemment que si elles permettent des choses différentes.
+
+| | Prix | Pouvoir |
 |---|---|---|
-| La Vaillante | gratuite | équilibrée, celle du départ |
-| La Souple | 120 | tourne très bien, un peu lente |
-| La Rapide | 260 | va vite, tourne mal |
-| La Cuirassée | 420 | encaisse un choc |
-| La Dorée | 900 | rapide, maniable, encaisse |
+| La Vaillante | gratuite | **Départ en douceur** — les vingt premières secondes sont plus calmes |
+| La Souple | 120 | **Se faufile** — deux fois plus fine, elle passe entre deux véhicules |
+| La Rapide | 260 | **Sang-froid** — les frôlements comptent double |
+| La Cuirassée | 420 | **Blindée** — encaisse un choc et repart |
+| La Dorée | 900 | **Aimant à pièces** — les pièces viennent à elle dans trois mètres |
+
+## Le défi par code
+
+Après une partie, le jeu donne un code à six chiffres. Envoie-le sur
+WhatsApp : celui qui le tape joue **exactement la même route** — mêmes
+véhicules, mêmes voies, mêmes pièces, dans le même ordre. Les deux scores
+se comparent directement.
+
+Il n'y a **aucun serveur**. Le code *est* la partie : il sert de graine au
+générateur, posée avant le premier tirage au sort. Deux appareils qui
+partent de la même graine produisent la même suite. C'est du multijoueur
+asynchrone qui ne coûte rien à héberger et qui passe par le canal que les
+gens utilisent déjà.
 
 ### Les modes
 

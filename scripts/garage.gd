@@ -15,6 +15,8 @@ var _plateau: Node3D
 
 var _nom: Label
 var _description: Label
+var _pouvoir: Label
+var _champ_code: LineEdit
 var _stats: Label
 var _cagnotte: Label
 var _bouton_action: Button
@@ -170,8 +172,13 @@ func _construire_interface() -> void:
 	suivant.pressed.connect(func(): _changer(1))
 	ligne.add_child(suivant)
 
-	_description = _titre("", 22, Color(0.88, 0.88, 0.90))
-	_description.custom_minimum_size = Vector2(0.0, 56.0)
+	# Le pouvoir en jaune, au-dessus de la description : c'est lui qui
+	# decide de l'achat, pas la prose.
+	_pouvoir = _titre("", 26, Color(1.0, 0.84, 0.20))
+	colonne.add_child(_pouvoir)
+
+	_description = _titre("", 21, Color(0.88, 0.88, 0.90))
+	_description.custom_minimum_size = Vector2(0.0, 64.0)
 	colonne.add_child(_description)
 
 	_bouton_action = _bouton("", 32)
@@ -213,6 +220,34 @@ func _construire_interface() -> void:
 
 	_record = _titre("", 24, Color(0.80, 0.84, 0.90))
 	colonne.add_child(_record)
+
+	# --- le defi
+	#
+	# Deux joueurs qui tapent le meme code affrontent exactement la meme
+	# route. Il n'y a pas de serveur : le code EST la partie. On l'envoie
+	# sur WhatsApp, l'autre le tape, et les scores se comparent.
+	colonne.add_child(_titre("Défi d'un ami", 24, Color(0.80, 0.84, 0.90)))
+	var ligne_defi := HBoxContainer.new()
+	ligne_defi.add_theme_constant_override("separation", 8)
+	colonne.add_child(ligne_defi)
+
+	_champ_code = LineEdit.new()
+	_champ_code.placeholder_text = "code reçu (ex. 483-921)"
+	_champ_code.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_champ_code.add_theme_font_size_override("font_size", 28)
+	_champ_code.custom_minimum_size = Vector2(0.0, 62.0)
+	_champ_code.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_champ_code.text = Donnees.code_defi
+	ligne_defi.add_child(_champ_code)
+
+	var effacer := _bouton("✕", 26)
+	effacer.custom_minimum_size = Vector2(70.0, 62.0)
+	effacer.pressed.connect(func():
+		_champ_code.text = ""
+		Donnees.code_defi = ""
+		Donnees.enregistrer()
+		_rafraichir())
+	ligne_defi.add_child(effacer)
 
 	var jouer := _bouton("JOUER", 42)
 	jouer.custom_minimum_size = Vector2(0.0, 88.0)
@@ -257,6 +292,10 @@ func _sur_action() -> void:
 
 
 func _jouer() -> void:
+	# Le code saisi decide de la route. Vide, la partie est tiree au sort
+	# comme d'habitude.
+	Donnees.code_defi = _champ_code.text.strip_edges()
+	Donnees.enregistrer()
 	get_tree().change_scene_to_packed(JEU)
 
 
@@ -266,7 +305,8 @@ func _rafraichir() -> void:
 	var possedee := Donnees.possede(cle)
 
 	_nom.text = str(moto["nom"])
-	_description.text = str(moto["description"])
+	_pouvoir.text = "★ " + str(moto["pouvoir_nom"])
+	_description.text = str(moto["pouvoir_texte"])
 	_cagnotte.text = "◉ %d" % Donnees.pieces
 
 	# Des barres plutot que des nombres : on compare deux motos d'un coup
@@ -295,6 +335,8 @@ func _rafraichir() -> void:
 	var mode := Catalogue.mode(Donnees.mode_choisi)
 	_record.text = "%s — record %d" % [str(mode["description"]),
 			Donnees.record(Donnees.mode_choisi)]
+	if _champ_code != null and not _champ_code.text.strip_edges().is_empty():
+		_record.text = "Défi %s — même route pour vous deux" 				% _champ_code.text.strip_edges()
 
 	_montrer(moto)
 

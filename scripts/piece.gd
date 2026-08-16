@@ -10,6 +10,13 @@ signal ramassee(position_monde: Vector3)
 
 var vitesse_du_jeu: float = 20.0
 
+## Portee de l'aimant, en metres. A zero, la piece ne bouge pas
+## lateralement — c'est le cas de toutes les motos sauf la Doree.
+var aimant: float = 0.0
+
+## La moto a suivre quand l'aimant est actif.
+var cible: Node3D = null
+
 var _visuel: Node3D
 
 
@@ -35,6 +42,14 @@ func _sur_contact(_autre: Area3D) -> void:
 
 func _process(delta: float) -> void:
 	position.z += vitesse_du_jeu * delta
+
+	# L'aimant n'agit que sur les pieces proches et deja devant la moto :
+	# une piece depassee ne doit pas revenir en arriere, ce serait absurde
+	# a regarder.
+	if aimant > 0.0 and cible != null and position.z < 2.0:
+		var ecart := cible.position.x - position.x
+		if absf(ecart) < aimant and position.z > -aimant * 4.0:
+			position.x += signf(ecart) * minf(absf(ecart), 9.0 * delta)
 	# Elle tourne sur elle-meme : c'est ce qui l'accroche du coin de l'oeil
 	# alors qu'elle ne fait qu'un demi-metre.
 	_visuel.rotation_degrees.y += 220.0 * delta

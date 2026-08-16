@@ -42,7 +42,14 @@ func _ready() -> void:
 	var boite := BoxShape3D.new()
 	# Nettement plus etroite que la moto : on pardonne au joueur qui frole.
 	# Une collision ressentie comme injuste fait desinstaller un jeu.
-	boite.size = Vector3(0.5, 1.2, 1.5)
+	#
+	# La Souple divise encore cette largeur par deux : c'est son pouvoir,
+	# et il se joue vraiment — elle passe dans des trous ou les autres
+	# accrochent.
+	var largeur := 0.5
+	if str(modele["pouvoir"]) == "etroite":
+		largeur = 0.25
+	boite.size = Vector3(largeur, 1.2, 1.5)
 	forme.shape = boite
 	forme.position = Vector3(0.0, 0.6, 0.0)
 	add_child(forme)

@@ -15,6 +15,31 @@ var casque_choisi: int = 0
 var mode_choisi: String = "sans_fin"
 var records: Dictionary = {}
 
+## Code du defi en cours, vide s'il n'y en a pas.
+##
+## Deux joueurs qui saisissent le meme code affrontent exactement la meme
+## route : memes vehicules, memes voies, memes pieces, dans le meme ordre.
+## Aucun serveur n'est necessaire — le code EST la partie. On l'envoie sur
+## WhatsApp, l'autre le tape, et les deux scores se comparent.
+var code_defi: String = ""
+
+
+## Transforme un code lisible en graine de generateur. Deux codes
+## identiques donnent forcement la meme route.
+static func graine_du_code(code: String) -> int:
+	var propre := code.replace("-", "").replace(" ", "").strip_edges()
+	if propre.is_empty():
+		return 0
+	return int(propre.hash())
+
+
+## Fabrique un code a six chiffres, presente par groupes de trois.
+static func nouveau_code() -> String:
+	var n := randi() % 900000 + 100000
+	var texte := str(n)
+	return texte.substr(0, 3) + "-" + texte.substr(3, 3)
+
+
 
 func _ready() -> void:
 	charger()

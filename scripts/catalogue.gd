@@ -13,6 +13,10 @@ extends RefCounted
 ## `vitesse` multiplie l'allure de depart et le plafond.
 ## `tenue` multiplie la vitesse de changement de voie.
 ## `casse` est le nombre de chocs encaisses avant la fin de la partie.
+##
+## `pouvoir` est ce qui distingue vraiment une moto d'une autre. Des
+## chiffres differents ne sont que des chiffres : deux motos ne se jouent
+## differemment que si elles permettent des choses differentes.
 const MOTOS := [
 	{
 		"cle": "vaillante",
@@ -23,6 +27,9 @@ const MOTOS := [
 		"tenue": 1.0,
 		"casse": 1,
 		"couleur": Color(0.78, 0.16, 0.14),
+		"pouvoir": "demarrage",
+		"pouvoir_nom": "Départ en douceur",
+		"pouvoir_texte": "Les vingt premières secondes sont plus calmes. Idéale pour apprendre.",
 	},
 	{
 		"cle": "souple",
@@ -33,6 +40,9 @@ const MOTOS := [
 		"tenue": 1.45,
 		"casse": 1,
 		"couleur": Color(0.16, 0.60, 0.58),
+		"pouvoir": "etroite",
+		"pouvoir_nom": "Se faufile",
+		"pouvoir_texte": "Deux fois plus fine que les autres. Elle passe entre deux véhicules là où personne n'entre.",
 	},
 	{
 		"cle": "rapide",
@@ -43,6 +53,9 @@ const MOTOS := [
 		"tenue": 0.82,
 		"casse": 1,
 		"couleur": Color(0.95, 0.62, 0.10),
+		"pouvoir": "frolement_double",
+		"pouvoir_nom": "Sang-froid",
+		"pouvoir_texte": "Les frôlements rapportent double. Le combo monte deux fois plus vite.",
 	},
 	{
 		"cle": "cuirassee",
@@ -53,6 +66,9 @@ const MOTOS := [
 		"tenue": 0.90,
 		"casse": 2,
 		"couleur": Color(0.35, 0.38, 0.44),
+		"pouvoir": "blindage",
+		"pouvoir_nom": "Blindée",
+		"pouvoir_texte": "Encaisse un choc et repart. Un répit d'une seconde et demie suit.",
 	},
 	{
 		"cle": "doree",
@@ -63,6 +79,9 @@ const MOTOS := [
 		"tenue": 1.30,
 		"casse": 2,
 		"couleur": Color(0.95, 0.76, 0.18),
+		"pouvoir": "aimant",
+		"pouvoir_nom": "Aimant à pièces",
+		"pouvoir_texte": "Les pièces viennent à elle dans un rayon de trois mètres. Plus besoin d'aller les chercher.",
 	},
 ]
 

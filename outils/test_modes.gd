@@ -54,5 +54,36 @@ func _ready() -> void:
 	else:
 		print("sauvegarde : aller-retour correct")
 
+	# Chaque moto doit avoir un pouvoir, et deux motos ne doivent pas
+	# partager le meme : sinon elles ne se distinguent que par des chiffres.
+	var pouvoirs := {}
+	for m in Catalogue.MOTOS:
+		var p := str(m.get("pouvoir", ""))
+		if p.is_empty():
+			push_error("%s n a pas de pouvoir" % m["cle"])
+			echecs += 1
+		elif pouvoirs.has(p):
+			push_error("pouvoir « %s » partage par %s et %s"
+					% [p, pouvoirs[p], m["cle"]])
+			echecs += 1
+		else:
+			pouvoirs[p] = str(m["cle"])
+	print("pouvoirs distincts : %d sur %d motos"
+			% [pouvoirs.size(), Catalogue.MOTOS.size()])
+
+	# Le defi : un meme code doit toujours donner la meme graine, et deux
+	# codes differents des graines differentes.
+	var a := Donnees.graine_du_code("483-921")
+	var b := Donnees.graine_du_code("483921")
+	var c := Donnees.graine_du_code("483-922")
+	if a != b:
+		push_error("le tiret change la graine, il ne devrait pas")
+		echecs += 1
+	if a == c:
+		push_error("deux codes differents donnent la meme route")
+		echecs += 1
+	if a == b and a != c:
+		print("defi : meme code, meme route ; code different, autre route")
+
 	print("RESULTAT : %d echec(s)" % echecs)
 	get_tree().quit(1 if echecs > 0 else 0)
