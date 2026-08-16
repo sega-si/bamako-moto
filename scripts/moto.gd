@@ -5,11 +5,16 @@ extends Area3D
 ## Elle n'avance pas : elle reste sur place et c'est l'avenue qui remonte
 ## vers elle. Le joueur ne fait que la deplacer d'une voie a l'autre, au
 ## doigt sur le telephone, aux fleches sur l'ordinateur.
+##
+## Ses caracteristiques viennent du garage : la tenue de route change sa
+## vitesse laterale, et les deux couleurs sont celles que le joueur a
+## choisies.
 
 const LARGEUR_VOIE := 3.0
 const VOIES := [-LARGEUR_VOIE, 0.0, LARGEUR_VOIE]
 
-## Vitesse de deplacement lateral, en metres par seconde.
+## Vitesse de deplacement lateral de base, en metres par seconde. Le
+## coefficient de tenue de la moto choisie la multiplie.
 @export var vitesse_laterale: float = 11.0
 
 ## Inclinaison dans les virages, en degres. Purement visuel — mais c'est
@@ -22,10 +27,15 @@ var _cible_x: float = 0.0
 var _doigt_pose: bool = false
 var _corps: Node3D
 var _poussiere: CPUParticles3D
+var _invulnerable_jusqua: float = 0.0
 
 
 func _ready() -> void:
-	_corps = Fabrique.moto()
+	var modele := Catalogue.moto(Donnees.moto_choisie)
+	vitesse_laterale *= float(modele["tenue"])
+
+	_corps = Fabrique.moto(modele["couleur"],
+			Catalogue.CASQUES[Donnees.casque_choisi]["couleur"])
 	add_child(_corps)
 
 	var forme := CollisionShape3D.new()
@@ -38,10 +48,7 @@ func _ready() -> void:
 	add_child(forme)
 
 	_creer_poussiere()
-
-	# La moto surveille ses propres collisions et previent la partie. La
-	# partie n'a pas a savoir comment on detecte un choc.
-	area_entered.connect(func(_autre: Area3D) -> void: touchee.emit())
+	area_entered.connect(_sur_choc)
 
 
 func _creer_poussiere() -> void:
@@ -71,6 +78,26 @@ func _creer_poussiere() -> void:
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_poussiere.mesh.material = m
 	add_child(_poussiere)
+
+
+func _sur_choc(_autre: Area3D) -> void:
+	# Pendant le repit qui suit un choc encaisse, on traverse sans encaisser
+	# un second coup : sinon un seul sotrama consommerait tout le blindage.
+	if Time.get_ticks_msec() < _invulnerable_jusqua:
+		return
+	touchee.emit()
+
+
+## Accorde un repit apres un choc encaisse : la moto clignote et ne peut
+## plus etre touchee pendant ce temps.
+func accorder_repit(secondes: float) -> void:
+	_invulnerable_jusqua = Time.get_ticks_msec() + int(secondes * 1000.0)
+	var clignotement := create_tween()
+	clignotement.set_loops(int(secondes * 6.0))
+	clignotement.tween_property(_corps, "visible", false, 0.0)
+	clignotement.tween_interval(0.08)
+	clignotement.tween_property(_corps, "visible", true, 0.0)
+	clignotement.tween_interval(0.08)
 
 
 func _process(delta: float) -> void:
@@ -117,3 +144,4 @@ func _viser_depuis_ecran(x_ecran: float) -> void:
 func arreter() -> void:
 	set_process(false)
 	_poussiere.emitting = false
+	_corps.visible = true

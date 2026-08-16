@@ -227,9 +227,13 @@ static func immeuble(graine: int) -> Node3D:
 	return n
 
 
-static func moto() -> Node3D:
+## La moto du joueur. Les deux couleurs viennent du garage : la carrosserie
+## depend de la moto achetee, le casque du choix du joueur. C'est la
+## personnalisation la moins chere a produire et la plus remarquee.
+static func moto(couleur_corps := Color(0.78, 0.16, 0.14),
+		couleur_casque := Color(0.94, 0.86, 0.30)) -> Node3D:
 	var n := Node3D.new()
-	_poser(n, Vector3(0.62, 0.5, 1.9), Color(0.78, 0.16, 0.14),
+	_poser(n, Vector3(0.62, 0.5, 1.9), couleur_corps,
 			Vector3(0.0, 0.62, 0.0))
 	_poser(n, Vector3(0.26, 0.62, 0.62), Color(0.10, 0.10, 0.11),
 			Vector3(0.0, 0.32, -0.85))
@@ -239,6 +243,10 @@ static func moto() -> Node3D:
 			Vector3(0.0, 0.98, -0.62))
 	_poser(n, Vector3(0.52, 0.62, 0.42), Color(0.20, 0.32, 0.62),
 			Vector3(0.0, 1.14, 0.18))
-	_poser(n, Vector3(0.44, 0.42, 0.46), Color(0.94, 0.86, 0.30),
+	_poser(n, Vector3(0.44, 0.42, 0.46), couleur_casque,
 			Vector3(0.0, 1.62, 0.14))
+	# Une bande de carrosserie sur le reservoir : elle rappelle la couleur
+	# de la moto la ou l'oeil du joueur est pose en permanence.
+	_poser(n, Vector3(0.30, 0.06, 0.9), couleur_corps.lightened(0.35),
+			Vector3(0.0, 0.88, 0.1))
 	return n

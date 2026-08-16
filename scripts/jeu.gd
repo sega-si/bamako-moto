@@ -37,6 +37,11 @@ var distance: float = 0.0
 var pieces: int = 0
 var en_cours: bool = true
 
+## Reglages issus du mode et de la moto choisis dans le garage.
+var _mode: Dictionary = {}
+var _temps_restant: float = 0.0
+var _vies: int = 1
+
 var _troncons: Array[Node3D] = []
 var _prochaine_apparition: float = 25.0
 var _prochaine_piece: float = 45.0
@@ -56,10 +61,23 @@ var _bonus: float = 0.0
 @onready var _score_final: Label = $Interface/Fin/ScoreFinal
 @onready var _record: Label = $Interface/Fin/Record
 
-const FICHIER := "user://partie.cfg"
 
 
 func _ready() -> void:
+	_mode = Catalogue.mode(Donnees.mode_choisi)
+	var moto := Catalogue.moto(Donnees.moto_choisie)
+
+	# La moto et le mode se multiplient : une Rapide en Circulation folle
+	# demarre a pres du double de l'allure de base. C'est voulu — c'est la
+	# combinaison que les joueurs cherchent une fois qu'ils maitrisent.
+	var facteur := float(moto["vitesse"]) * float(_mode["depart"])
+	vitesse_depart *= facteur
+	vitesse_maximale *= float(moto["vitesse"])
+	espacement_depart *= float(_mode["densite"])
+	espacement_minimal *= float(_mode["densite"])
+	_vies = int(moto["casse"])
+	_temps_restant = float(_mode["duree"])
+
 	vitesse = vitesse_depart
 	_fin.hide()
 	_annonce.modulate.a = 0.0
@@ -77,8 +95,16 @@ func _process(delta: float) -> void:
 	if not en_cours:
 		if Input.is_action_just_pressed("rejouer"):
 			get_tree().reload_current_scene()
+		elif Input.is_action_just_pressed("retour"):
+			get_tree().change_scene_to_file("res://scenes/garage.tscn")
 		_animer_camera(delta)
 		return
+
+	if _temps_restant > 0.0:
+		_temps_restant -= delta
+		if _temps_restant <= 0.0:
+			_terminer(true)
+			return
 
 	vitesse = minf(vitesse + acceleration * delta, vitesse_maximale)
 	var avance := vitesse * delta
@@ -90,8 +116,14 @@ func _process(delta: float) -> void:
 	_gerer_combo(delta)
 	_animer_camera(delta)
 
-	_score.text = "%d m" % int(distance + _bonus)
+	if float(_mode["duree"]) > 0.0:
+		_score.text = "%d s   %d m" % [ceili(_temps_restant),
+				int(distance + _bonus)]
+	else:
+		_score.text = "%d m" % int(distance + _bonus)
 	_compteur_pieces.text = "◉ %d" % pieces
+	if _vies > 1:
+		_compteur_pieces.text += "   " + "♥".repeat(_vies - 1)
 
 
 func _faire_defiler(avance: float) -> void:
@@ -176,6 +208,12 @@ func _faire_apparaitre_pieces() -> void:
 func _sur_piece_ramassee(_ou: Vector3) -> void:
 	pieces += 1
 	_bonus += 5.0
+	# En Chrono, une piece rallonge la partie. C'est ce qui transforme la
+	# collecte en vraie decision : aller la chercher coute du risque mais
+	# rend du temps.
+	if float(_mode["duree"]) > 0.0:
+		_temps_restant += 2.0
+		_annoncer("+2 s")
 
 
 func _gerer_frolements() -> void:
@@ -234,30 +272,32 @@ func _animer_camera(delta: float) -> void:
 	_camera.position.y = 4.6 + tremblement.y
 
 
-func _terminer() -> void:
+func _terminer(temps_ecoule := false) -> void:
 	if not en_cours:
 		return
+
+	# Une moto blindee encaisse : on retire une vie, on secoue, on accorde
+	# un repit, et la partie continue.
+	if not temps_ecoule and _vies > 1:
+		_vies -= 1
+		_secousse = 1.0
+		_combo = 0
+		_moto.accorder_repit(1.6)
+		_annoncer("Aïe !")
+		return
+
 	en_cours = false
 	_secousse = 1.0
 	_annonce.modulate.a = 0.0
 
 	var total := int(distance + _bonus)
-	_score_final.text = "%d points" % total
+	_score_final.text = "%d points   ◉ %d" % [total, pieces]
+	$Interface/Fin/Titre.text = "Temps écoulé" if temps_ecoule else "Touché !"
 
-	var sauvegarde := ConfigFile.new()
-	sauvegarde.load(FICHIER)
-	var record := int(sauvegarde.get_value("partie", "record", 0))
-	var tresor := int(sauvegarde.get_value("partie", "pieces", 0))
-
-	if total > record:
-		record = total
+	if Donnees.terminer_partie(Donnees.mode_choisi, total, pieces):
 		_record.text = "Nouveau record !"
 	else:
-		_record.text = "Record : %d" % record
-
-	sauvegarde.set_value("partie", "record", record)
-	sauvegarde.set_value("partie", "pieces", tresor + pieces)
-	sauvegarde.save(FICHIER)
+		_record.text = "Record : %d" % Donnees.record(Donnees.mode_choisi)
 
 	_fin.show()
 	_moto.arreter()

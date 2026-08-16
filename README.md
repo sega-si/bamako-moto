@@ -91,8 +91,46 @@ partie ne s'arrête pas. Une capture d'écran ne prouve pas qu'une collision
 fonctionne ; ce test, oui. À rejouer après toute modification des gabarits
 ou des couches de collision.
 
-`res://outils/apercu.tscn` enregistre une image et relève la vitesse
-d'affichage.
+`res://outils/test_modes.tscn` essaie chaque entrée du catalogue et
+vérifie que la sauvegarde fait l'aller-retour : une clé mal orthographiée
+ne se verrait sinon qu'au moment où un joueur choisit cette moto-là.
+
+`res://outils/apercu.tscn` et `res://outils/apercu_garage.tscn`
+enregistrent une image et relèvent la vitesse d'affichage.
+
+## Le garage
+
+L'écran d'accueil. On y choisit sa moto, la couleur de son casque et son
+mode, et on y dépense les pièces ramassées en jouant.
+
+Tout ce qui se débloque est décrit dans `scripts/catalogue.gd`, et nulle
+part ailleurs. Ajouter une moto, c'est ajouter une ligne : ni le garage ni
+la partie n'ont à être touchés. Les noms sont inventés — aucune marque
+réelle, jamais, un jeu qui affiche un nom de constructeur se fait retirer
+de la boutique.
+
+### Les motos
+
+| | Prix | Ce qu'elle vaut |
+|---|---|---|
+| La Vaillante | gratuite | équilibrée, celle du départ |
+| La Souple | 120 | tourne très bien, un peu lente |
+| La Rapide | 260 | va vite, tourne mal |
+| La Cuirassée | 420 | encaisse un choc |
+| La Dorée | 900 | rapide, maniable, encaisse |
+
+### Les modes
+
+**Sans fin** — la course classique, ça accélère tout seul.
+**Chrono** — quatre-vingt-dix secondes, et chaque pièce en rajoute deux.
+C'est ce qui transforme la collecte en décision : aller chercher une pièce
+coûte du risque mais rend du temps.
+**Circulation folle** — départ à une fois et demie l'allure normale, vagues
+resserrées d'un tiers.
+
+Le mode et la moto se multiplient : une Rapide en Circulation folle démarre
+à près du double de l'allure de base. C'est voulu — c'est la combinaison
+que les joueurs cherchent une fois qu'ils maîtrisent.
 
 ## À faire
 
@@ -100,8 +138,7 @@ d'affichage.
       de partie.** Une volée de pièces provoque encore un à-coup d'une
       image. Les tronçons tournent déjà en boucle ; il faut faire pareil
       pour le reste.
-- [ ] Écran titre
-- [ ] Pièces à ramasser, améliorations de la moto entre les parties
+- [ ] Des quartiers qui se débloquent : le marché, le pont, la nuit
 - [ ] Sons
 - [ ] Export Android
 - [ ] Multijoueur entre amis, partagé par WhatsApp
