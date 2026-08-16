@@ -66,8 +66,19 @@ objet coûtait une centaine d'appels de rendu pour l'avenue entière.
 **Rien n'est créé pendant la partie**, sauf les véhicules : les douze
 tronçons tournent en boucle, ce qui évite les à-coups.
 
+**Les ombres ne sont calculées que sur les cinquante premiers mètres.**
+Au-delà, la brume mange le décor : personne ne voit qu'il n'en projette
+plus, mais tout ce qui sort de cette distance quitte la passe d'ombres.
+
+### Matériel visé
+
+Un téléphone de 2021 — Tecno Spark ou Camon, Samsung Galaxy A. C'est ce
+qui décide du budget : environ 400 appels de rendu sont confortables, il
+serait absurde d'appauvrir le décor pour des machines que plus personne
+n'utilise.
+
 Mesuré sur un portable de 2018 à carte graphique intégrée : **60 images
-par seconde, 5 248 triangles, 259 appels de rendu.**
+par seconde, 6 560 triangles, 387 appels de rendu.**
 
 ## Vérifier que ça marche
 
@@ -85,6 +96,10 @@ d'affichage.
 
 ## À faire
 
+- [ ] **Recycler les véhicules et les pièces au lieu de les créer en cours
+      de partie.** Une volée de pièces provoque encore un à-coup d'une
+      image. Les tronçons tournent déjà en boucle ; il faut faire pareil
+      pour le reste.
 - [ ] Écran titre
 - [ ] Pièces à ramasser, améliorations de la moto entre les parties
 - [ ] Sons

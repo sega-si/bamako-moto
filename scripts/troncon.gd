@@ -64,33 +64,57 @@ func _construire_bandes() -> void:
 
 func _construire_decor() -> void:
 	# Sans decor lateral, rien ne defile dans la peripherie et la vitesse
-	# ne se sent pas. C'est ce qui donne l'impression de rouler vite.
-	var teintes := [Color(0.85, 0.72, 0.52), Color(0.78, 0.62, 0.46),
-			Color(0.88, 0.80, 0.62), Color(0.72, 0.58, 0.44)]
-
+	# ne se sent pas.
+	#
+	# Mais du decor repetitif est presque pire : au bout de trente
+	# secondes, l'oeil reconnait le motif et l'avenue devient un couloir.
+	# On alterne donc cinq choses differentes, avec un pas de 7 metres qui
+	# ne divise pas les 20 metres du troncon — de sorte que le motif ne
+	# retombe jamais au meme endroit d'un tour a l'autre.
+	# Trois elements par cote. La cible est un telephone de 2021 — Tecno
+	# Spark ou Camon, Samsung Galaxy A — qui encaisse sans peine les
+	# quatre cents appels de rendu que cela coute. Viser plus bas revenait
+	# a appauvrir le decor pour des machines que personne n'utilise plus.
 	for cote in [-1.0, 1.0]:
-		for i in range(2):
-			var z := -LONGUEUR * 0.5 + 5.0 + float(i) * 10.0
-			var rang := _variante * 4 + i + int(cote > 0.0) * 2
+		for i in range(3):
+			var z := -LONGUEUR * 0.5 + 3.5 + float(i) * 7.0
+			var rang := _variante * 7 + i * 3 + int(cote > 0.0) * 5
+			_poser_element(rang, cote, z)
 
-			if rang % 3 == 0:
-				var poteau := Fabrique.boite(Vector3(0.35, 6.5, 0.35),
-						Color(0.72, 0.70, 0.66))
-				poteau.position = Vector3(cote * 6.6, 3.2, z)
-				add_child(poteau)
-				var bras := Fabrique.boite(Vector3(1.2, 0.16, 0.16),
-						Color(0.72, 0.70, 0.66))
-				bras.position = Vector3(cote * 6.0, 6.3, z)
-				add_child(bras)
-			else:
-				var hauteur := 3.0 + float(rang % 4) * 1.3
-				var mur := Fabrique.boite(Vector3(4.5, hauteur, 6.0),
-						teintes[rang % teintes.size()])
-				mur.position = Vector3(cote * 10.0, hauteur * 0.5, z)
-				add_child(mur)
-				# Un toit plus clair : deux volumes valent mieux qu'un
-				# pave uniforme, et ca ne coute que douze triangles.
-				var toit := Fabrique.boite(Vector3(4.8, 0.3, 6.3),
-						Color(0.62, 0.56, 0.48))
-				toit.position = Vector3(cote * 10.0, hauteur + 0.15, z)
-				add_child(toit)
+
+func _poser_element(rang: int, cote: float, z: float) -> void:
+	match rang % 7:
+		0, 3:
+			var immeuble := Fabrique.immeuble(rang)
+			immeuble.position = Vector3(cote * 10.0, 0.0, z)
+			add_child(immeuble)
+		1:
+			var poteau := Fabrique.boite(Vector3(0.35, 6.5, 0.35),
+					Color(0.72, 0.70, 0.66))
+			poteau.position = Vector3(cote * 6.6, 3.2, z)
+			add_child(poteau)
+			var bras := Fabrique.boite(Vector3(1.4, 0.16, 0.16),
+					Color(0.72, 0.70, 0.66))
+			bras.position = Vector3(cote * (6.6 - 0.7), 6.3, z)
+			add_child(bras)
+			# La lampe, orientee vers la chaussee.
+			var lampe := Fabrique.boite(Vector3(0.5, 0.16, 0.3),
+					Color(0.94, 0.90, 0.72))
+			lampe.position = Vector3(cote * 5.9, 6.2, z)
+			add_child(lampe)
+		2, 5:
+			var arbre := Fabrique.arbre(rang)
+			arbre.position = Vector3(cote * 7.4, 0.0, z)
+			add_child(arbre)
+		4:
+			var etal := Fabrique.etal(rang)
+			etal.position = Vector3(cote * 7.0, 0.0, z)
+			add_child(etal)
+			etal.rotation_degrees.y = 90.0 if cote > 0.0 else -90.0
+		_:
+			# Un mur de cloture, bas : il laisse voir derriere et ouvre
+			# la perspective au lieu de la boucher.
+			var mur := Fabrique.boite(Vector3(0.3, 2.0, 6.5),
+					Color(0.74, 0.66, 0.54))
+			mur.position = Vector3(cote * 7.6, 1.0, z)
+			add_child(mur)
